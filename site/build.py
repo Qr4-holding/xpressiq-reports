@@ -55,8 +55,10 @@ def footer(depth=0):
 <p style="margin:0;color:#7f9690">© {y} {SITE['company']} · <a href="{b}privacy.html">Privacy</a></p>
 </div></footer>
 <script>
-document.querySelectorAll('.thumb').forEach(t=>{{const v=t.querySelector('video');if(!v)return;t.addEventListener('click',e=>{{if(t.classList.contains('playing'))return;t.classList.add('playing');v.controls=true;v.play();}});v.addEventListener('ended',()=>{{t.classList.remove('playing');v.controls=false;}});}});
-document.querySelectorAll('.share').forEach(sb=>{{const url=sb.dataset.url,text=sb.dataset.text;const n=sb.querySelector('.sh-native');if(navigator.share&&n){{n.hidden=false;n.addEventListener('click',()=>navigator.share({{title:text,text:text,url:url}}).catch(()=>{{}}));}}const c=sb.querySelector('.sh-copy');c&&c.addEventListener('click',async()=>{{try{{await navigator.clipboard.writeText(url);const o=c.innerHTML;c.innerHTML='Copied';setTimeout(()=>c.innerHTML=o,1800);}}catch(e){{prompt('Copy this link',url);}}}});}});
+document.querySelectorAll('.thumb').forEach(t=>{{const v=t.querySelector('video');if(!v)return;t.addEventListener('click',e=>{{if(e.target.closest('.shr,.shpop'))return;if(t.classList.contains('playing'))return;t.classList.add('playing');v.controls=true;v.play();}});v.addEventListener('ended',()=>{{t.classList.remove('playing');v.controls=false;}});
+const b=t.querySelector('.shr'),pop=t.querySelector('.shpop');if(!b)return;b.addEventListener('click',async e=>{{e.stopPropagation();const url=b.dataset.url,text=b.dataset.text;if(navigator.share){{try{{await navigator.share({{title:text,text:text,url:url}});return;}}catch(err){{if(err&&err.name==='AbortError')return;}}}}document.querySelectorAll('.shpop.open').forEach(p=>p!==pop&&p.classList.remove('open'));pop.classList.toggle('open');}});
+const c=pop.querySelector('.shcopy');c.addEventListener('click',async e=>{{e.stopPropagation();try{{await navigator.clipboard.writeText(b.dataset.url);c.lastChild.textContent='Copied';setTimeout(()=>{{c.lastChild.textContent='Copy link';pop.classList.remove('open');}},1200);}}catch(err){{prompt('Copy this link',b.dataset.url);}}}});}});
+document.addEventListener('click',e=>{{if(!e.target.closest('.shpop,.shr'))document.querySelectorAll('.shpop.open').forEach(p=>p.classList.remove('open'));}});
 document.querySelectorAll('form[data-api]').forEach(f=>{{f.addEventListener('submit',async e=>{{e.preventDefault();const btn=f.querySelector('button[type=submit]');const msg=f.querySelector('.formmsg');const data=Object.fromEntries(new FormData(f).entries());btn.disabled=true;try{{const r=await fetch(f.dataset.api,{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(data)}});const j=await r.json();if(j.ok){{f.querySelectorAll('input,textarea,select').forEach(i=>i.disabled=true);btn.textContent=f.dataset.done||'Done';msg.textContent=f.dataset.thanks||'Thank you.';}}else{{msg.textContent=j.error||'Something went wrong. Please try again.';btn.disabled=false;}}}}catch(err){{msg.textContent='Could not send just now. Please try again in a moment.';btn.disabled=false;}}}});}});
 </script></body></html>"""
 
@@ -68,6 +70,28 @@ def optin(depth=0, report_slug="", compact=False):
     return f"""<div class="panel-dark optin{' compact' if compact else ''}"><div class="eyebrow">Get the weekly report</div>{head_h}<p>{para}</p>
 <form data-api="/api/subscribe" data-done="Subscribed" data-thanks="You're on the list. The next report comes to your inbox." method="post" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">{hid}<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true"><label for="email-{report_slug or 'home'}" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Email address</label><input id="email-{report_slug or 'home'}" name="email" type="email" placeholder="you@company.co.uk" required style="flex:1 1 220px;min-height:48px;padding:0 16px;border-radius:6px;border:1px solid #4e6b67;background:#0b1f22;color:#fff"><button type="submit" class="btn btn-lime">Send me the report</button><p class="formmsg" role="status" style="flex-basis:100%;margin:0;font-size:14px;color:#bdf453"></p></form>
 <p style="font-size:12px;color:#8fa8a0">For founders, owners, investors and advisers who move on opportunity.</p></div>"""
+
+def _ic(d): return f'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="{d}"/></svg>'
+ICONS = {
+ "share": _ic("M18 16a3 3 0 0 0-2.4 1.2l-7-4.1a3 3 0 0 0 0-2.2l7-4.1A3 3 0 1 0 15 5c0 .3 0 .6.1.9l-7 4.1a3 3 0 1 0 0 4l7 4.1A3 3 0 1 0 18 16"),
+ "wa": _ic("M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6.3-.5c.1-.2 0-.4 0-.5L9 6.7c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.5-.2M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2m0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2"),
+ "li": _ic("M20.4 2H3.6A1.6 1.6 0 0 0 2 3.6v16.8A1.6 1.6 0 0 0 3.6 22h16.8a1.6 1.6 0 0 0 1.6-1.6V3.6A1.6 1.6 0 0 0 20.4 2M8 19H5V9.5h3M6.5 8.2a1.7 1.7 0 1 1 0-3.5 1.7 1.7 0 0 1 0 3.5M19 19h-3v-4.6c0-1.1 0-2.5-1.5-2.5s-1.8 1.2-1.8 2.4V19h-3V9.5h2.9v1.3h.1a3.1 3.1 0 0 1 2.8-1.5c3 0 3.5 2 3.5 4.5"),
+ "x": _ic("M17.5 3h3.1l-6.8 7.7L21.8 21h-6.2l-4.9-6.4L5.1 21H2l7.3-8.3L1.7 3h6.4l4.4 5.8M16.4 19.2h1.7L7 4.7H5.1"),
+ "em": _ic("M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1m9 7.3L20 7H4m0 11h16V8.8l-8 5.5-8-5.5"),
+ "ln": _ic("M10.6 13.4a1 1 0 0 1 0-1.4l3.4-3.4a3 3 0 0 1 4.2 4.2l-1.5 1.5-1.4-1.4 1.5-1.5a1 1 0 0 0-1.4-1.4l-3.4 3.4a1 1 0 0 0 1.4 1.4l.7-.7 1.4 1.4-.7.7a3 3 0 0 1-4.2-4.2m2.8-2.8a1 1 0 0 1 0 1.4L10 15.4a3 3 0 0 1-4.2-4.2l1.5-1.5 1.4 1.4-1.5 1.5a1 1 0 0 0 1.4 1.4l3.4-3.4"),
+}
+
+def share_overlay(url, text):
+    """Small share icon on a video thumb; opens the phone share sheet, or a compact popover on desktop."""
+    import urllib.parse as u
+    q = u.quote(url, safe=""); t = u.quote(text, safe="")
+    return (f'<button type="button" class="shr" aria-label="Share this video" data-url="{esc(url)}" data-text="{esc(text)}">{ICONS["share"]}</button>'
+            f'<div class="shpop" role="menu">'
+            f'<a href="https://wa.me/?text={t}%20{q}" target="_blank" rel="noopener">{ICONS["wa"]}WhatsApp</a>'
+            f'<a href="https://www.linkedin.com/sharing/share-offsite/?url={q}" target="_blank" rel="noopener">{ICONS["li"]}LinkedIn</a>'
+            f'<a href="https://x.com/intent/post?url={q}&text={t}" target="_blank" rel="noopener">{ICONS["x"]}X</a>'
+            f'<a href="mailto:?subject={t}&body={t}%0A%0A{q}">{ICONS["em"]}Email</a>'
+            f'<button type="button" class="shcopy">{ICONS["ln"]}Copy link</button></div>')
 
 def share(url, text):
     """Share row: native share sheet on phones, then WhatsApp, LinkedIn, X, email, copy link."""
@@ -91,15 +115,16 @@ def share(url, text):
 PLAY = '<span class="play" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="#10282b"><path d="M7 4.5v15l13-7.5z"/></svg></span>'
 
 def thumb(r, kind, depth=0, big_title=None):
-    """kind: '16x9' or '9x16'. Returns a bare branded video thumb or a placeholder."""
+    """kind: '16x9' or '9x16'. Returns a bare branded video thumb (with a share icon) or a placeholder."""
     b = "../" * depth
     vid = r["videos"].get(kind)
+    share_url = f"{BASE_URL}/shorts/{r['slug']}" if kind == "9x16" else f"{BASE_URL}/reports/{r['slug']}"
     ratio = "r169" if kind == "16x9" else "r916"
     brand = '<span class="brand" aria-hidden="true">Xpress<i>IQ</i></span>'
     if vid:
         return (f'<div class="thumb {ratio}" tabindex="0" role="button" aria-label="Play: {esc(vid["title"])}">'
                 f'<video preload="metadata" playsinline poster="{b}{v(vid["poster"])}" src="{b}{v(vid["file"])}"></video>'
-                f'{brand}{PLAY}<span class="dur">{vid["duration"]}</span></div>')
+                f'{brand}{PLAY}<span class="dur">{vid["duration"]}</span>{share_overlay(share_url, vid["title"])}</div>')
     t = big_title or r["title"]
     return (f'<div class="thumb {ratio}" aria-label="{esc(t)} – video coming">'
             f'<div class="ph"><strong>{esc(t)}</strong><span>[VIDEO COMING]</span></div>{brand}{PLAY}</div>')
@@ -183,7 +208,7 @@ def build_gallery():
 <div class="meta"><span class="eyebrow">Report {r['number']:02d} · {esc(r['date_label'])}</span>{'<span class="tag tag-next">Ready</span>' if v else '<span class="tag tag-soon">Coming soon</span>'}</div>
 <h3 class="h">{esc(v['title'] if v else r['title'])}</h3><p>{esc(r['summary'])}</p>
 <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center"><a class="link" href="reports/{r['slug']}.html">Read the full report →</a>{('<a class="link" href="shorts/' + r['slug'] + '.html">Open the short →</a>') if v else ''}</div>
-{share(f"{BASE_URL}/shorts/{r['slug']}", v['title']) if v else ''}</article>""")
+</article>""")
     out = head("XpressIQ Shorts — the report in a minute or two", "Portrait video summaries of every Fast Movers First report.")
     out += nav("gallery")
     out += f"""<main><section class="section wrap"><div class="sec-head"><div><div class="eyebrow"><span class="dot"></span>Shorts</div><h2 class="h">The report, in a minute or two.</h2></div><p>Portrait summaries of each Fast Movers First report, for the people who move before they have read the full thing. Each one links to its report and sources.</p></div>
@@ -253,7 +278,7 @@ def build_report(i, r):
 <div class="eyebrow"><span class="dot"></span>Fast Movers First · Report {r['number']:02d} · {esc(r['date_label'])}</div>
 <h1 class="h">{esc(r['title'])}</h1>
 <p class="byline">{esc(r['standfirst'])}</p>
-<div style="margin:36px 0 44px">{thumb(r,'16x9',1)}<div class="meta"><span class="eyebrow">Full briefing · {r['videos'].get('16x9',{}).get('duration','coming')}</span><a href="../gallery.html" style="font-size:14px;font-weight:700;text-decoration:none;border-bottom:2px solid #9fb59f">The short version is in Shorts →</a></div>{share(url, r['title'])}</div>
+<div style="margin:36px 0 44px">{thumb(r,'16x9',1)}<div class="meta"><span class="eyebrow">Full briefing · {r['videos'].get('16x9',{}).get('duration','coming')}</span><a href="../gallery.html" style="font-size:14px;font-weight:700;text-decoration:none;border-bottom:2px solid #9fb59f">The short version is in Shorts →</a></div></div>
 {('<div class="eyebrow" style="margin-bottom:6px">Evidence grades</div><div class="grades" style="border-color:#dce4dc">' + grades + '</div>') if grades else ''}
 {('<blockquote><p><strong>The next move. </strong>' + esc(r['next_move']) + '</p></blockquote>') if r.get('next_move') else ''}
 {body}
@@ -275,7 +300,6 @@ def build_short(r):
 <h1 class="h" style="font-size:40px;margin:14px 0 14px">{esc(vid['title'])}</h1>
 <p style="font-size:17px;line-height:1.65;color:#44585b">{esc(r['summary'])}</p>
 <a class="btn btn-dark" href="../reports/{r['slug']}.html" style="margin-top:8px">Read the full report and sources</a>
-<div style="margin-top:28px">{share(url, vid['title'])}</div>
 <div style="margin-top:36px">{optin(1, r['slug'], compact=True)}</div>
 </div></div></section></main>"""
     out += footer(depth=1)
