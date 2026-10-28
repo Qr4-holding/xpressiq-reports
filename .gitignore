@@ -1,0 +1,5 @@
+site/build/
+skill/build/
+skill/out/
+*.log
+__pycache__/

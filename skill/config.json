@@ -1,0 +1,40 @@
+{
+  "brand": "XpressIQ",
+  "strapline": "FAST MOVERS FIRST",
+  "series_label": "XpressIQ · Fast Movers First report summary",
+  "contact_email": "Contact@XpressIQ.co.uk",
+  "outro_cta": "For the full report and its sources, or to commission one of your own:",
+  "copyright": "© 2026 XpressIQ Limited. All rights reserved.",
+  "colors": {
+    "dark": "#10282b",
+    "lime": "#bdf453",
+    "cream": "#f5f6ef",
+    "accent": "#5f931f"
+  },
+  "fonts": {
+    "display": "/usr/share/fonts/opentype/inter/InterDisplay-Bold.otf",
+    "body": "/usr/share/fonts/opentype/inter/Inter-Medium.otf"
+  },
+  "voice": {
+    "provider": "elevenlabs",
+    "voice_name": "Tom - Calm Advertising",
+    "voice_id": "VDYfIKeHJwXUpUQhs8FR",
+    "model_id": "eleven_v4",
+    "intro_line": "XpressIQ. Fast movers first. Intelligence delivered before you knew you needed it.",
+    "outro_line": "Fast movers first. For the full report and its sources, or to commission one of your own, write to contact at XpressIQ dot co dot uk.",
+    "title_line_template": "This week: {title_spoken}",
+    "intro_file": "vo/intro.mp3",
+    "outro_file": "vo/outro.mp3"
+  },
+  "intro": {
+    "min_seconds": 5.0
+  },
+  "outro": {
+    "min_seconds": 7.0
+  },
+  "body": {
+    "trim_end_seconds": 3.0,
+    "cut_before_card_seconds": 0.15,
+    "note": "NotebookLM puts a 3 s end card on every export; wrap.py auto-detects it and cuts just before, falling back to trim_end_seconds."
+  }
+}

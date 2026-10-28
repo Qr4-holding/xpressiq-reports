@@ -1,0 +1,129 @@
+{
+  "site": {
+    "company": "XpressIQ Limited",
+    "email": "Contact@XpressIQ.co.uk",
+    "subscribe_action": "#"
+  },
+  "next": {
+    "label": "Report 04 · November 2026",
+    "title": "Waste management: who is still running a £1bn-plus sector on phone calls and paper?",
+    "summary": "Operational bottlenecks, the regulatory shifts in play and where a commercial opening may sit. Findings traced and graded, as always."
+  },
+  "radar": [
+    "Spreadsheet-driven margin leakage",
+    "SME procurement automation",
+    "Human-led customer service triage",
+    "Invoice chasing and cash flow",
+    "SME supplier-risk screening",
+    "Property and facilities workflows",
+    "Trade-business quote to cash",
+    "High-street legal back-office support",
+    "Independent hospitality forecasting",
+    "Insurance and underinsurance review"
+  ],
+  "reports": [
+    {
+      "number": 1,
+      "slug": "ai-agent-governance",
+      "title": "Why 40% of AI agents will fail — and the four-tier fix.",
+      "date_label": "October 2026",
+      "standfirst": "Gartner expects four in ten enterprises to demote or decommission autonomous AI agents by 2027. The cause is not the agents. It is treating governance as a switch — locked down or fully trusted — instead of a dial.",
+      "summary": "Binary governance is the failure mode. A four-level autonomy taxonomy (Observe, Advise, Act with approval, Act autonomously) lets controls scale with what an agent can actually do.",
+      "next_move": "Pick one AI agent or automation already running in your business. Write down which of the four levels it sits at, what it can read, what it can write, and who owns it. If any of those four answers takes more than a minute, that is the governance gap, and it is where the first control goes.",
+      "grades": [
+        {
+          "grade": "Traced",
+          "claim": "40% of enterprises will demote or decommission AI agents by 2027.",
+          "note": "Gartner, Inc. announcement, 26 May 2026. A forecast, not a measurement: it predicts behaviour, so it should be read as an analyst projection."
+        },
+        {
+          "grade": "Attributed",
+          "claim": "Binary governance is the root cause of agent failure.",
+          "note": "Quoted from Shiva Varma, Senior Director Analyst at Gartner, in the same announcement. An expert view supported by the two failure modes it describes."
+        },
+        {
+          "grade": "Framework",
+          "claim": "Four autonomy levels: Observe, Advise, Act with approval, Act autonomously.",
+          "note": "A classification, not a finding. Its value is that controls can be attached to each level and stack as autonomy increases."
+        },
+        {
+          "grade": "Illustrative",
+          "claim": "A circuit breaker should trip at a 2% error rate.",
+          "note": "The 2% is a worked example in the report, not a tested threshold. Set the real number from your own baseline error rate."
+        }
+      ],
+      "videos": {
+        "16x9": {
+          "file": "videos/agent-governance-16x9.mp4",
+          "poster": "thumbs/agent-governance-16x9.jpg",
+          "duration": "9:16",
+          "title": "AI Agent Governance — full briefing"
+        },
+        "9x16": {
+          "file": "videos/agent-governance-9x16.mp4",
+          "poster": "thumbs/agent-governance-9x16.jpg",
+          "duration": "1:47",
+          "title": "Why 40% of AI agents will fail"
+        }
+      }
+    },
+    {
+      "number": 2,
+      "slug": "everyday-business-workflows",
+      "title": "The missing middle: everyday UK business workflows ready for AI.",
+      "date_label": "October 2026",
+      "standfirst": "Where is the real AI opportunity for UK businesses? Not in the boardroom and not in the chatbot, but in the overstuffed inbox, the duplicate payment and the broken hand-off between two systems nobody owns.",
+      "summary": "The practical AI openings in UK firms sit in everyday workflows: inbox triage, invoice matching, scheduling and the hand-offs between systems that still run on people and paper.",
+      "status": "Written report to follow",
+      "next_move": "List the five tasks in your business that someone does by hand every single day because two systems do not talk to each other. Those five are the missing middle, and the first one on the list is the pilot.",
+      "grades": [],
+      "videos": {
+        "16x9": {
+          "file": "videos/everyday-workflows-16x9.mp4",
+          "poster": "thumbs/everyday-workflows-16x9.jpg",
+          "duration": "8:06",
+          "title": "The Missing Middle in AI — full briefing"
+        },
+        "9x16": {
+          "file": "videos/everyday-workflows-9x16.mp4",
+          "poster": "thumbs/everyday-workflows-9x16.jpg",
+          "duration": "1:55",
+          "title": "Everyday business workflows ready for AI"
+        }
+      }
+    },
+    {
+      "number": 3,
+      "slug": "small-business-ai-blind-spot",
+      "title": "The small business AI blind spot.",
+      "date_label": "28 October 2026",
+      "standfirst": "Adoption is growing. Understanding and oversight need to catch up. A widely shared headline claimed 90% of small firms use AI and only 23% understand it. We traced both figures.",
+      "summary": "The 90% figure is not substantiated. The 23% is real but measures formal review of in-house AI, not understanding. The useful question is what AI can access, what it costs and who owns it.",
+      "status": "Videos to follow",
+      "next_move": "Ask five business owners one question this week: could you list every AI tool your staff used last month, and what each one can access? If none can answer in under a minute, the opening is real.",
+      "grades": [
+        {
+          "grade": "Not substantiated",
+          "claim": "90% of small businesses use AI.",
+          "note": "No survey, dataset or method is given for this figure in the article that carried it. Treat it as a slogan, not a statistic."
+        },
+        {
+          "grade": "Traced",
+          "claim": "23% formally review their own AI.",
+          "note": "Pax8 Q3 2026 SMB AI Pulse Report, UK sample of 350. The figure is about documented review of internally built AI, not about understanding AI in general."
+        },
+        {
+          "grade": "Traced",
+          "claim": "51% of UK small firms (10–49 staff) handling digitised data use AI.",
+          "note": "UK Business Data Survey 2026. Different population and question from Pax8; the two cannot be combined."
+        },
+        {
+          "grade": "Hypothesis",
+          "claim": "There is a paid service in mapping a firm's AI inventory.",
+          "note": "What is in use, what it can reach, what it costs, who signs for it. Unproven until a customer pays for it."
+        }
+      ],
+      "videos": {}
+    }
+  ]
+}

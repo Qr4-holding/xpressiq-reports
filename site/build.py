@@ -1,0 +1,236 @@
+#!/usr/bin/env python3
+"""Build the XpressIQ Fast Movers First site from reports.json + reports/*.md.
+Usage: python3 build.py   (run inside the site folder)
+Outputs: index.html, gallery.html, commission.html, reports/<slug>.html
+"""
+import json, re, html, pathlib, datetime
+import markdown
+
+ROOT = pathlib.Path(__file__).parent
+MANIFEST = json.loads((ROOT / "reports.json").read_text())
+REPORTS = MANIFEST["reports"]            # newest first
+SITE = MANIFEST["site"]
+
+def esc(s): return html.escape(s, quote=True)
+
+def head(title, desc, depth=0):
+    base = "../" * depth
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{esc(title)}</title><meta name="description" content="{esc(desc)}">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{base}assets/site.css"></head><body>"""
+
+def nav(active, depth=0):
+    b = "../" * depth
+    def a(href, label, key):
+        on = ' class="on"' if key == active else ""
+        return f'<a href="{b}{href}"{on}>{label}</a>'
+    return f"""<header class="nav"><div class="wrap">
+<a class="logo" href="{b}index.html"><span class="h">Xpress<i>IQ</i><b></b></span><small>Fast Movers First</small></a>
+<nav class="navlinks" aria-label="Main navigation">{a('index.html#latest','Latest report','home')}{a('index.html#reports','All reports','reports')}{a('gallery.html','Shorts','gallery')}{a('index.html#method','How it is made','method')}{a('commission.html','Commission a report','commission')}</nav>
+<a class="btn btn-dark navcta" href="{b}index.html#subscribe">Get the weekly report</a>
+</div></header>"""
+
+def footer(depth=0):
+    b = "../" * depth
+    y = datetime.date.today().year
+    return f"""<footer class="footer"><div class="wrap">
+<div><a class="logo" href="{b}index.html"><span class="h">Xpress<i style="color:#bdf453">IQ</i></span><small>Fast Movers First</small></a><p style="margin:8px 0 0">Intelligence delivered before you knew you needed it.</p></div>
+<div style="display:flex;gap:24px;flex-wrap:wrap"><a href="{b}index.html#latest">Latest</a><a href="{b}gallery.html">Shorts</a><a href="{b}commission.html">Commission</a><a href="mailto:{SITE['email']}">{SITE['email']}</a></div>
+<p style="margin:0;color:#7f9690">© {y} {SITE['company']} · <a href="{b}privacy.html">Privacy</a></p>
+</div></footer>
+<script>
+document.querySelectorAll('.thumb').forEach(t=>{{const v=t.querySelector('video');if(!v)return;t.addEventListener('click',e=>{{if(t.classList.contains('playing'))return;t.classList.add('playing');v.controls=true;v.play();}});v.addEventListener('ended',()=>{{t.classList.remove('playing');v.controls=false;}});}});
+</script></body></html>"""
+
+PLAY = '<span class="play" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="#10282b"><path d="M7 4.5v15l13-7.5z"/></svg></span>'
+
+def thumb(r, kind, depth=0, big_title=None):
+    """kind: '16x9' or '9x16'. Returns a bare branded video thumb or a placeholder."""
+    b = "../" * depth
+    v = r["videos"].get(kind)
+    ratio = "r169" if kind == "16x9" else "r916"
+    brand = '<span class="brand" aria-hidden="true">Xpress<i>IQ</i></span>'
+    if v:
+        return (f'<div class="thumb {ratio}" tabindex="0" role="button" aria-label="Play: {esc(v["title"])}">'
+                f'<video preload="metadata" playsinline poster="{b}{v["poster"]}" src="{b}{v["file"]}"></video>'
+                f'{brand}{PLAY}<span class="dur">{v["duration"]}</span></div>')
+    t = big_title or r["title"]
+    return (f'<div class="thumb {ratio}" aria-label="{esc(t)} – video coming">'
+            f'<div class="ph"><strong>{esc(t)}</strong><span>[VIDEO COMING]</span></div>{brand}{PLAY}</div>')
+
+def tag_for(grade):
+    return {"Traced":"tag-ok","Attributed":"tag-ok","Framework":"tag-hyp","Hypothesis":"tag-hyp","Not substantiated":"tag-fail","Illustrative":"tag-hyp"}.get(grade,"tag-hyp")
+
+def report_card(r, depth=0):
+    b = "../" * depth
+    v = r["videos"].get("16x9")
+    status = '<span class="tag tag-next">Latest</span>' if r is REPORTS[0] else (f'<span class="tag tag-soon">{esc(r["status"])}</span>' if r.get("status") else "")
+    body = thumb(r, "16x9", depth)
+    return f"""<article><a href="{b}reports/{r['slug']}.html" style="text-decoration:none;color:inherit">{body}</a>
+<div class="meta"><span class="eyebrow">Report {r['number']:02d} · {esc(r['date_label'])}</span>{status}</div>
+<h3 class="h" style="font-size:22px;font-weight:700;margin:10px 0 6px"><a href="{b}reports/{r['slug']}.html" style="text-decoration:none">{esc(r['title'])}</a></h3>
+<p style="font-size:14px;line-height:1.55;color:#44585b;margin:0">{esc(r['summary'])}</p></article>"""
+
+# ---------- index ----------
+def build_index():
+    L = REPORTS[0]
+    grades = "".join(f'<div class="grade"><span class="tag {tag_for(g["grade"])}">{esc(g["grade"])}</span><div><strong>{esc(g["claim"])}</strong><span>{esc(g["note"])}</span></div></div>' for g in L["grades"])
+    others = "".join(report_card(r) for r in REPORTS)
+    radar = "".join(f'<div style="display:flex;justify-content:space-between;gap:16px;padding:17px 0;border-bottom:1px solid #d3dfd2;align-items:center"><div style="display:flex;gap:16px;align-items:baseline"><span style="color:#80a850;font-size:12px;font-weight:700;font-family:Manrope,sans-serif">{i+1:02d}</span><strong style="font-size:16px">{esc(x)}</strong></div><span class="tag tag-hyp">Hypothesis</span></div>' for i,x in enumerate(MANIFEST["radar"]))
+    half = (len(MANIFEST["radar"])+1)//2
+    radar_items = [f'<div style="display:flex;justify-content:space-between;gap:16px;padding:17px 0;border-bottom:1px solid #d3dfd2;align-items:center"><div style="display:flex;gap:16px;align-items:baseline"><span style="color:#80a850;font-size:12px;font-weight:700;font-family:Manrope,sans-serif">{i+1:02d}</span><strong style="font-size:16px">{esc(x)}</strong></div><span class="tag tag-hyp">Hypothesis</span></div>' for i,x in enumerate(MANIFEST["radar"])]
+    radar_html = f'<div class="grid2" style="gap:0 48px"><div style="border-top:1px solid #d3dfd2">{"".join(radar_items[:half])}</div><div style="border-top:1px solid #d3dfd2">{"".join(radar_items[half:])}</div></div>'
+    nx = MANIFEST["next"]
+    out = head(f"XpressIQ — Fast Movers First. {L['title']}", "Weekly intelligence reports for people who move on opportunity. Every claim traced, every finding graded, every report ends with a next move.")
+    out += nav("home")
+    out += f"""<main>
+<section class="wrap hero" id="top">
+<div>
+<div class="eyebrow"><span class="dot"></span>Fast intel. One report, two videos. Every week.</div>
+<h1 class="h">Find out before<br>it's <i>obvious.</i></h1>
+<p class="lead">Intelligence delivered before you knew you needed it.<span class="copy-lead"> By the time an opportunity is in the trade press, the fast movers have already moved. XpressIQ traces what is changing in UK business, grades the evidence and names the next move worth testing.</span></p>
+<div class="stats copy-lead"><div><div class="h">1 report</div><div>Every week</div></div><div><div class="h">2 videos</div><div>Full briefing and a short</div></div><div><div class="h">3 grades</div><div>Traced · Framework · Not substantiated</div></div></div>
+</div>
+<div id="latest">
+{thumb(L,'16x9')}
+<div class="meta"><span class="eyebrow">Report {L['number']:02d} · {esc(L['date_label'])}</span><span class="tag tag-next">Latest</span></div>
+<h2 class="h" style="font-size:22px;font-weight:700;margin:10px 0 6px;line-height:1.25">{esc(L['title'])}</h2>
+<p style="color:#53666a;line-height:1.6;font-size:14px;margin:0">{esc(L['summary'])}</p>
+<a href="reports/{L['slug']}.html" style="display:inline-block;color:#3f6a1a;font-size:14px;font-weight:700;margin-top:12px;text-decoration:none">Read the full report →</a>
+<div class="after"><p class="lead" style="margin-top:24px">By the time an opportunity is in the trade press, the fast movers have already moved. XpressIQ traces what is changing in UK business, grades the evidence and names the next move worth testing.</p>
+<div class="stats"><div><div class="h">1 report</div><div>Every week</div></div><div><div class="h">2 videos</div><div>Full and short</div></div><div><div class="h">Traced</div><div>Every claim</div></div></div></div>
+</div>
+</section>
+<div class="ticker"><div class="wrap"><span>FAST MOVERS FIRST</span><span>EVERY CLAIM TRACED TO ITS SOURCE</span><span>EVERY FINDING GRADED</span><span>EVERY REPORT ENDS WITH A NEXT MOVE</span></div></div>
+
+<section class="section dark-sec" id="this-week"><div class="wrap">
+<div class="sec-head"><div><div class="eyebrow">Report {L['number']:02d} · what the evidence supports</div><h2 class="h">{esc(L['title'])}</h2></div><p>{esc(L['standfirst'])}</p></div>
+<div class="grid2">
+<div class="short">{thumb(L,'9x16')}<div class="meta"><span class="eyebrow" style="color:#9fb5ad">The short · {L['videos'].get('9x16',{}).get('duration','')}</span><p style="color:#c0d0c9;line-height:1.7;font-size:16px;margin:0">{esc(L['summary'])}</p><a class="btn btn-lime" href="reports/{L['slug']}.html">Read the full report</a></div></div>
+<div><div class="eyebrow" style="color:#9fb5ad;margin-bottom:6px">Evidence grades</div><div class="grades">{grades}</div>
+<div class="nextmove"><div class="eyebrow">The next move</div><p>{esc(L['next_move'])}</p><a href="commission.html" class="btn btn-lime" style="margin-top:18px">Discuss this with XpressIQ</a></div></div>
+</div></div></section>
+
+<section class="section wrap" id="reports">
+<div class="sec-head"><div><div class="eyebrow"><span class="dot"></span>Fast Movers First reports</div><h2 class="h">One report a week.<br>The archive builds itself.</h2></div><p>Every report stays available with its sources, its evidence grades and both videos, so you can check how a call has aged.</p></div>
+<div class="grid3">{others}</div>
+</section>
+
+<section class="section wash" id="method"><div class="wrap">
+<div class="sec-head"><div><div class="eyebrow"><span class="dot"></span>How every report is made</div><h2 class="h">Same method every week.<br>That is the point.</h2></div><p>A fixed process is what makes the report trustworthy. You know how a claim was checked because every report is checked the same way.</p></div>
+<div class="grid5">
+<div class="card"><div class="h" style="font-size:36px;color:#c6d9b6">01</div><h3 class="h">Research</h3><p>One question investigated across sources, including the ones that disagree.</p></div>
+<div class="card"><div class="h" style="font-size:36px;color:#c6d9b6">02</div><h3 class="h">Source of truth</h3><p>One checked document. Every claim traced to where it came from and graded.</p></div>
+<div class="card"><div class="h" style="font-size:36px;color:#c6d9b6">03</div><h3 class="h">Two videos</h3><p>A full briefing and a short, made from the document. Nothing is added that is not in it.</p></div>
+<div class="card"><div class="h" style="font-size:36px;color:#c6d9b6">04</div><h3 class="h">Framed</h3><p>An XpressIQ intro sets the question. An outro names the next move worth testing.</p></div>
+<div class="card dark"><div class="h" style="font-size:36px;color:#bdf453">05</div><h3 class="h">Published, weekly</h3><p>The report and both videos go live. Next week, a new question. Same method.</p></div>
+</div></div></section>
+
+<section class="section wrap" id="radar">
+<div class="sec-head"><div><div class="eyebrow"><span class="dot"></span>On the radar</div><h2 class="h">Where the next<br>opening could be.</h2></div><p>Proposed gaps in everyday UK business operations. Each is a starting hypothesis for a future report, not a claim of proven demand.</p></div>
+{radar_html}
+<div class="card" style="margin-top:36px;flex-direction:row;justify-content:space-between;align-items:center;flex-wrap:wrap"><div><div style="display:flex;align-items:center;gap:12px"><span class="tag tag-next">Next report</span><span class="eyebrow">{esc(nx['label'])}</span></div><h3 class="h" style="font-size:24px;margin-top:10px">{esc(nx['title'])}</h3><p style="margin-top:6px;max-width:640px">{esc(nx['summary'])}</p></div><a href="#subscribe" class="btn btn-dark">Be told when it drops</a></div>
+</section>
+
+<section class="cta" id="subscribe"><div class="wrap cta-grid">
+<div class="panel-dark"><div class="eyebrow">Get the weekly report</div><h2 class="h" style="font-size:40px">Fast movers first.<br>Everyone else, later.</h2><p>One email a week with the report, both videos and the sources. No digest, no filler. Unsubscribe in one click.</p>
+<form action="{SITE['subscribe_action']}" method="post" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px"><label for="email" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Email address</label><input id="email" name="email" type="email" placeholder="you@company.co.uk" required style="flex:1 1 240px;min-height:48px;padding:0 16px;border-radius:6px;border:1px solid #4e6b67;background:#0b1f22;color:#fff"><button type="submit" class="btn btn-lime">Send me the report</button></form>
+<p style="font-size:12px;color:#8fa8a0">For founders, owners, investors and advisers who move on opportunity.</p></div>
+<div class="panel-light"><div class="eyebrow">Need the method on your own question?</div><h2 class="h" style="font-size:32px">Commission a Fast Movers First report.</h2><p>A market, a sector or an idea you cannot stop thinking about, put through the same process: researched, traced, graded and ended with the next move. Delivered as a written report and two videos.</p><a href="commission.html" class="btn btn-dark" style="align-self:flex-start;margin-top:auto">Start a report enquiry</a></div>
+</div></section>
+</main>"""
+    out += footer()
+    (ROOT / "index.html").write_text(out)
+
+# ---------- gallery ----------
+def build_gallery():
+    items = []
+    for r in REPORTS:
+        v = r["videos"].get("9x16")
+        items.append(f"""<article>{thumb(r,'9x16')}
+<div class="meta"><span class="eyebrow">Report {r['number']:02d} · {esc(r['date_label'])}</span>{'<span class="tag tag-next">Ready</span>' if v else '<span class="tag tag-soon">Coming soon</span>'}</div>
+<h3 class="h">{esc(v['title'] if v else r['title'])}</h3><p>{esc(r['summary'])}</p>
+<a class="link" href="reports/{r['slug']}.html">Read the full Fast Movers First report →</a></article>""")
+    out = head("XpressIQ Shorts — the report in a minute or two", "Portrait video summaries of every Fast Movers First report.")
+    out += nav("gallery")
+    out += f"""<main><section class="section wrap"><div class="sec-head"><div><div class="eyebrow"><span class="dot"></span>Shorts</div><h2 class="h">The report, in a minute or two.</h2></div><p>Portrait summaries of each Fast Movers First report, for the people who move before they have read the full thing. Each one links to its report and sources.</p></div>
+<div class="gallery">{''.join(items)}</div></section></main>"""
+    out += footer()
+    (ROOT / "gallery.html").write_text(out)
+
+# ---------- commission ----------
+def build_commission():
+    out = head("Commission a Fast Movers First report — XpressIQ", "Put your own market, sector or idea through the XpressIQ method: researched, traced, graded, ended with the next move.")
+    out += nav("commission")
+    out += f"""<main><section class="section wrap"><div class="grid2">
+<div><div class="eyebrow"><span class="dot"></span>Commission a report</div><h1 class="h" style="font-size:52px;margin:14px 0 18px">Your question.<br>Same method.</h1>
+<p style="font-size:18px;line-height:1.65;color:#44585b;max-width:520px">Every Fast Movers First report follows one process. Commissioned reports follow it too: your market, sector or idea is researched across sources, written up as a single source of truth with every claim traced and graded, then delivered as a written report with a full video briefing and a short.</p>
+<div class="grid3" style="margin-top:28px;gap:12px">
+<div class="card"><div class="eyebrow">01</div><h3 class="h" style="font-size:18px">The question</h3><p>A market, a sector, a competitor, a regulation or an idea you cannot stop thinking about.</p></div>
+<div class="card"><div class="eyebrow">02</div><h3 class="h" style="font-size:18px">The decision</h3><p>What you need to decide once you have the answer. The report is built to support that decision.</p></div>
+<div class="card"><div class="eyebrow">03</div><h3 class="h" style="font-size:18px">The timeframe</h3><p>When you need it. Most reports turn around inside a week.</p></div>
+</div>
+<p style="font-size:14px;color:#5d7073;margin-top:24px">Pricing is agreed per report once the scope is clear. Commissioned reports are private to you unless you choose to publish them.</p>
+</div>
+<div class="panel-light"><div class="eyebrow">Start a report enquiry</div>
+<form action="mailto:{SITE['email']}" method="post" enctype="text/plain" style="display:flex;flex-direction:column;gap:14px">
+<div class="field"><label for="name">Your name</label><input id="name" name="Name" required></div>
+<div class="field"><label for="org">Company or organisation</label><input id="org" name="Company"></div>
+<div class="field"><label for="from">Email address</label><input id="from" name="Email" type="email" required></div>
+<div class="field"><label for="q">The idea, market or question</label><textarea id="q" name="Question" required></textarea></div>
+<div class="field"><label for="d">What you need to decide</label><textarea id="d" name="Decision"></textarea></div>
+<div class="field"><label for="t">Preferred timeframe</label><select id="t" name="Timeframe"><option>Within a week</option><option>Within two weeks</option><option>Within a month</option><option>No fixed date</option></select></div>
+<button type="submit" class="btn btn-dark">Send enquiry</button>
+<p style="font-size:13px;color:#5d7073;margin:0">This opens your email app addressed to <a href="mailto:{SITE['email']}">{SITE['email']}</a>. Or write to that address directly with the three answers above.</p>
+</form></div>
+</div></section></main>"""
+    out += footer()
+    (ROOT / "commission.html").write_text(out)
+
+# ---------- report pages ----------
+def md_to_html(text):
+    # strip ?utm_source tracking, leave links
+    text = re.sub(r"\?utm_source=chatgpt\.com", "", text)
+    h = markdown.markdown(text, extensions=["tables", "sane_lists"])
+    h = h.replace("<table>", '<div class="tablewrap"><table>').replace("</table>", "</table></div>")
+    # drop the document's own H1 (page supplies it)
+    h = re.sub(r"<h1>.*?</h1>\s*", "", h, count=1, flags=re.S)
+    return h
+
+def build_report(i, r):
+    prev_r = REPORTS[i+1] if i+1 < len(REPORTS) else None
+    next_r = REPORTS[i-1] if i-1 >= 0 else None
+    body = md_to_html((ROOT / "reports" / f"{r['slug']}.md").read_text()) if (ROOT / "reports" / f"{r['slug']}.md").exists() else f'<p class="srcnote">Written report to follow. The videos above carry this week\'s findings.</p>'
+    grades = "".join(f'<div class="grade" style="border-color:#dce4dc"><span class="tag {tag_for(g["grade"])}">{esc(g["grade"])}</span><div><strong style="font-family:Manrope,sans-serif;font-size:16px;font-weight:700;display:block;margin-bottom:4px">{esc(g["claim"])}</strong><span style="color:#53666a;font-size:14px;line-height:1.5">{esc(g["note"])}</span></div></div>' for g in r.get("grades",[]))
+    pager = f'<div class="pager"><span>{("<a href=\"" + prev_r["slug"] + ".html\">← Previous: " + esc(prev_r["title"]) + "</a>") if prev_r else ""}</span><span>{("<a href=\"" + next_r["slug"] + ".html\">Next: " + esc(next_r["title"]) + " →</a>") if next_r else "<a href=\"../index.html#subscribe\">Get next week's report →</a>"}</span></div>'
+    out = head(f"{r['title']} — XpressIQ Fast Movers First report {r['number']:02d}", r["summary"], depth=1)
+    out += nav("reports", depth=1)
+    out += f"""<main><section class="section wrap"><article class="report">
+<div class="eyebrow"><span class="dot"></span>Fast Movers First · Report {r['number']:02d} · {esc(r['date_label'])}</div>
+<h1 class="h">{esc(r['title'])}</h1>
+<p class="byline">{esc(r['standfirst'])}</p>
+<div class="videos"><div>{thumb(r,'16x9',1)}<div class="meta"><span class="eyebrow">Full briefing · {r['videos'].get('16x9',{}).get('duration','coming')}</span></div></div><div>{thumb(r,'9x16',1)}<div class="meta"><span class="eyebrow">The short · {r['videos'].get('9x16',{}).get('duration','coming')}</span></div></div></div>
+{('<div class="eyebrow" style="margin-bottom:6px">Evidence grades</div><div class="grades" style="border-color:#dce4dc">' + grades + '</div>') if grades else ''}
+{('<blockquote><p><strong>The next move. </strong>' + esc(r['next_move']) + '</p></blockquote>') if r.get('next_move') else ''}
+{body}
+<p class="srcnote">This report follows the XpressIQ method: one question, researched across sources, written up as a single source of truth with every claim traced to where it came from and graded. The videos are made from this document and add nothing to it. Questions or corrections: <a href="mailto:{SITE['email']}">{SITE['email']}</a>.</p>
+{pager}
+</article></section></main>"""
+    out += footer(depth=1)
+    (ROOT / "reports" / f"{r['slug']}.html").write_text(out)
+
+def build_privacy():
+    out = head("Privacy — XpressIQ", "How XpressIQ handles the information you give it.")
+    out += nav("", 0)
+    out += f"""<main><section class="section wrap"><article class="report"><h1 class="h" style="font-size:40px">Privacy</h1>
+<p>XpressIQ ({SITE['company']}) collects an email address when you subscribe to the weekly report, and the details you choose to send when you enquire about a commissioned report. That information is used only to send you the report or reply to your enquiry. It is not sold or shared. You can unsubscribe from any email in one click, or ask for your details to be deleted by writing to <a href="mailto:{SITE['email']}">{SITE['email']}</a>.</p>
+<p>Videos on this site are hosted on this site. No advertising trackers are used.</p></article></section></main>"""
+    out += footer()
+    (ROOT / "privacy.html").write_text(out)
+
+if __name__ == "__main__":
+    build_index(); build_gallery(); build_commission(); build_privacy()
+    for i, r in enumerate(REPORTS): build_report(i, r)
+    print("built:", [p.name for p in ROOT.glob("*.html")], [p.name for p in (ROOT/"reports").glob("*.html")])
