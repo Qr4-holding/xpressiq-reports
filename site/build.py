@@ -28,7 +28,7 @@ def nav(active, depth=0):
         return f'<a href="{b}{href}"{on}>{label}</a>'
     return f"""<header class="nav"><div class="wrap">
 <a class="logo" href="{b}index.html"><span class="h">Xpress<i>IQ</i><b></b></span><small>Fast Movers First</small></a>
-<nav class="navlinks" aria-label="Main navigation">{a('index.html#latest','Latest report','home')}{a('index.html#reports','All reports','reports')}{a('gallery.html','Shorts','gallery')}{a('index.html#method','How it is made','method')}{a('commission.html','Commission a report','commission')}</nav>
+<nav class="navlinks" aria-label="Main navigation">{a('index.html#latest','Latest report','home')}{a('index.html#reports','All reports','reports')}{a('gallery.html','Shorts','gallery')}{a('commission.html','Commission a report','commission')}</nav>
 <a class="btn btn-dark navcta" href="{b}index.html#subscribe">Get the weekly report</a>
 </div></header>"""
 
@@ -128,21 +128,9 @@ def build_index():
 <div class="grid3">{others}</div>
 </section>
 
-<section class="section wash" id="method"><div class="wrap">
-<div class="sec-head"><div><div class="eyebrow"><span class="dot"></span>How every report is made</div><h2 class="h">Same method every week.<br>That is the point.</h2></div><p>A fixed process is what makes the report trustworthy. You know how a claim was checked because every report is checked the same way.</p></div>
-<div class="grid5">
-<div class="card"><div class="h" style="font-size:36px;color:#c6d9b6">01</div><h3 class="h">Research</h3><p>One question investigated across sources, including the ones that disagree.</p></div>
-<div class="card"><div class="h" style="font-size:36px;color:#c6d9b6">02</div><h3 class="h">Source of truth</h3><p>One checked document. Every claim traced to where it came from and graded.</p></div>
-<div class="card"><div class="h" style="font-size:36px;color:#c6d9b6">03</div><h3 class="h">Two videos</h3><p>A full briefing and a short, made from the document. Nothing is added that is not in it.</p></div>
-<div class="card"><div class="h" style="font-size:36px;color:#c6d9b6">04</div><h3 class="h">Framed</h3><p>An XpressIQ intro sets the question. An outro names the next move worth testing.</p></div>
-<div class="card dark"><div class="h" style="font-size:36px;color:#bdf453">05</div><h3 class="h">Published, weekly</h3><p>The report and both videos go live. Next week, a new question. Same method.</p></div>
-</div></div></section>
 
-<section class="section wrap" id="radar">
-<div class="sec-head"><div><div class="eyebrow"><span class="dot"></span>On the radar</div><h2 class="h">Where the next<br>opening could be.</h2></div><p>Proposed gaps in everyday UK business operations. Each is a starting hypothesis for a future report, not a claim of proven demand.</p></div>
-{radar_html}
-<div class="card" style="margin-top:36px;flex-direction:row;justify-content:space-between;align-items:center;flex-wrap:wrap"><div><div style="display:flex;align-items:center;gap:12px"><span class="tag tag-next">Next report</span><span class="eyebrow">{esc(nx['label'])}</span></div><h3 class="h" style="font-size:24px;margin-top:10px">{esc(nx['title'])}</h3><p style="margin-top:6px;max-width:640px">{esc(nx['summary'])}</p></div><a href="#subscribe" class="btn btn-dark">Be told when it drops</a></div>
-</section>
+
+
 
 <section class="cta" id="subscribe"><div class="wrap cta-grid">
 {optin()}
@@ -228,11 +216,10 @@ def build_report(i, r):
 <div class="eyebrow"><span class="dot"></span>Fast Movers First · Report {r['number']:02d} · {esc(r['date_label'])}</div>
 <h1 class="h">{esc(r['title'])}</h1>
 <p class="byline">{esc(r['standfirst'])}</p>
-<div class="videos"><div>{thumb(r,'16x9',1)}<div class="meta"><span class="eyebrow">Full briefing · {r['videos'].get('16x9',{}).get('duration','coming')}</span></div></div><div>{thumb(r,'9x16',1)}<div class="meta"><span class="eyebrow">The short · {r['videos'].get('9x16',{}).get('duration','coming')}</span></div></div></div>
+<div style="margin:36px 0 44px">{thumb(r,'16x9',1)}<div class="meta"><span class="eyebrow">Full briefing · {r['videos'].get('16x9',{}).get('duration','coming')}</span><a href="../gallery.html" style="font-size:14px;font-weight:700;text-decoration:none;border-bottom:2px solid #9fb59f">The short version is in Shorts →</a></div></div>
 {('<div class="eyebrow" style="margin-bottom:6px">Evidence grades</div><div class="grades" style="border-color:#dce4dc">' + grades + '</div>') if grades else ''}
 {('<blockquote><p><strong>The next move. </strong>' + esc(r['next_move']) + '</p></blockquote>') if r.get('next_move') else ''}
 {body}
-<p class="srcnote">This report follows the XpressIQ method: one question, researched across sources, written up as a single source of truth with every claim traced to where it came from and graded. The videos are made from this document and add nothing to it. Questions, corrections or a report of your own: <a href="../commission.html">commission a report</a>.</p>
 {optin(1, r['slug'])}
 {pager}
 </article></section></main>"""
