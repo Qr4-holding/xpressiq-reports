@@ -29,7 +29,7 @@ document.querySelectorAll('.thumb').forEach(t=>{const v=t.querySelector('video')
 const b=t.querySelector('.ri-share');if(!b)return;const lab=b.querySelector('span');let ready=null,busy=false;
 const fname=()=> (b.dataset.text||'XpressIQ').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,60)+'.mp4';
 const linkShare=async()=>{const url=b.dataset.url,text=b.dataset.text;if(navigator.share){try{await navigator.share({title:text,text:text,url:url});}catch(e){}return;}try{await navigator.clipboard.writeText(url);lab.textContent='Copied';setTimeout(()=>lab.textContent='Share',1500);}catch(e){prompt('Copy this link',url);}};
-const fileShare=async f=>{await navigator.share({files:[f],title:b.dataset.text,text:b.dataset.text+' '+b.dataset.url});};
+const fileShare=async f=>{await navigator.share({files:[f],title:b.dataset.text,text:b.dataset.text});};
 b.addEventListener('click',async e=>{e.stopPropagation();const fu=b.dataset.file;
  if(!fu||!navigator.canShare||!navigator.canShare({files:[new File([new Blob()],'x.mp4',{type:'video/mp4'})]})){return linkShare();}
  if(ready){try{await fileShare(ready);}catch(err){if(err.name!=='AbortError')linkShare();}lab.textContent='Share';return;}
