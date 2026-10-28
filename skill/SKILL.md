@@ -12,33 +12,24 @@ Everything that can vary is in `config.json` (brand text, colours, fonts, voice,
 ## Inputs you need from Robert
 1. The report `.md` file.
 2. The 16:9 video and the 9:16 video (mp4).
-3. The report title as it should appear on screen (one sentence, ends with a full stop) and the spoken form for the intro line (numbers written as words: "forty percent", not "40%").
+3. The report title as it should appear on screen (one sentence, ends with a full stop).
 
 Ask for anything missing before starting. Do not invent a title.
 
 ## Step 1 — the voiceover
-The brand intro line and the outro line are fixed and already rendered as `vo/intro.mp3` and `vo/outro.mp3`. **Do not regenerate them**; regenerating changes the voice take and costs credits.
+The intro is **silent**: a 3-second motion card (logo, FAST MOVERS FIRST, the title, "XpressIQ · Fast Movers First report summary"; the lime rule sweeps, the dot pops, then a fade to the video). Nothing to generate.
 
-Only the per-report title line is new each week. Generate it once with the ElevenLabs connector:
-- voice_id `VDYfIKeHJwXUpUQhs8FR` (Tom – Calm Advertising, mature neutral-British male), model `eleven_v4`, `generations_count: 1`.
-- prompt: `This week: <title_spoken>` — e.g. `This week: why forty percent of AI agents will fail, and the four-tier fix.`
-- Poll `creative_get_flow_run_status` until complete, download the `content_url` to `vo/title-NN-<slug>.mp3` (a short Python `urllib.request.urlretrieve` works; the URL expires in two hours).
-
-If Robert has by then supplied his own cloned voice, change `voice.voice_id` in `config.json` and re-render all three lines once.
+The outro voiceover is fixed and already rendered as `vo/outro.mp3`. **Do not regenerate it**; regenerating changes the take and costs credits. If Robert supplies his own cloned voice later, change `voice.voice_id` in `config.json` and re-render the outro line once with the ElevenLabs connector (voice_id from `config.json`, model `eleven_v4`, `generations_count: 1`, prompt = `voice.outro_line`), download the `content_url` to `vo/outro.mp3`.
 
 ## Step 2 — wrap the two videos
 From the skill folder:
 
 ```
-# full briefing: title on screen AND spoken
 python3 wrap.py wrap --config config.json \
-  --video <in-16x9.mp4> --out out/<slug>-16x9.mp4 \
-  --title "<Title on screen.>" --title-vo vo/title-NN-<slug>.mp3
+  --video <in-16x9.mp4> --out out/<slug>-16x9.mp4 --title "<Title on screen.>"
 
-# short: title on screen only (keeps the intro to ~7.5 s)
 python3 wrap.py wrap --config config.json \
-  --video <in-9x16.mp4> --out out/<slug>-9x16.mp4 \
-  --title "<Title on screen.>"
+  --video <in-9x16.mp4> --out out/<slug>-9x16.mp4 --title "<Title on screen.>"
 ```
 
 `wrap.py` reads the source size and frame rate, renders the intro and outro frames with Pillow at that size, lays the voiceover under them, re-encodes the body to matching settings and concatenates intro + body + outro (H.264, AAC stereo 44.1 kHz, faststart). An 8-minute 720p file takes a few minutes; run it in the background.
@@ -48,7 +39,7 @@ Three things it does on its own, every time:
 - **Makes the first frame the thumbnail.** The intro card is fully drawn from frame 0 (logo, FAST MOVERS FIRST, the title, "XpressIQ · Fast Movers First report summary"), so a player that shows the first frame shows the branded card, never black.
 - **Writes a poster and embeds it.** `out/<slug>-16x9.jpg` (and `-9x16.jpg`) is the same card as a JPEG with a lime play button bottom-right; it is also embedded in the mp4 as cover art. Use that JPEG as the site poster and as the upload thumbnail on YouTube, LinkedIn or TikTok.
 
-Check the output: `ffprobe` the duration (roughly source − 3 s + 14.5 s intro + 12 s outro for a 16:9 with title VO; source − 3 s + 7.8 s + 12 s for a short) and pull one frame from the intro (`-ss 3`) and one from the outro (`-ss <dur-4>`) to confirm the cards rendered.
+Check the output: `ffprobe` the duration (roughly source − 3 s + 3 s intro + 12 s outro) and pull one frame from the intro (`-ss 3`) and one from the outro (`-ss <dur-4>`) to confirm the cards rendered.
 
 To preview the cards alone without a body: `python3 wrap.py render-cards --config config.json --out build/cards --title "..." --title-vo ...`
 
@@ -59,7 +50,7 @@ The site lives in the `site/` folder (repo `Qr4-holding/xpressiq-reports`). It i
 2. Copy the posters `wrap.py` wrote (`out/<slug>-16x9.jpg`, `out/<slug>-9x16.jpg`) to `site/thumbs/`.
 3. Copy the `.md` to `site/reports/<slug>.md`.
 4. Add a new object at the **top** of `reports` in `site/reports.json` (newest first = featured on the home page). Fields: `number`, `slug`, `title`, `date_label`, `standfirst`, `summary`, `next_move`, `access` (`free`, or `members` to show only the first section and a members panel), `grades` (each `{grade, claim, note}` with grade one of `Traced`, `Attributed`, `Framework`, `Hypothesis`, `Illustrative`, `Not substantiated`), `videos.16x9` and `videos.9x16` (`file`, `poster`, `duration` as m:ss of the **wrapped** file, `title`). Write the grades from the report's own sources; every claim must name where it came from.
-   The build puts an email opt-in after the first section of every report and another at the end; nothing to add by hand.
+   The build puts an email opt-in after the first section of every report and another at the end; nothing to add by hand. The report page shows the 16:9 briefing only; the short appears in the Shorts gallery.
 5. Update `next` in `reports.json` to the following week's topic.
 6. `cd site && python3 build.py`, then open `index.html` and `reports/<slug>.html` in a headless browser and screenshot at 1360 px and 390 px wide to check nothing has broken.
 7. Commit and push to `main`. The VPS container clones `main` on start, so after pushing, restart the Docker project `xpressiq` on VPS `2079067` with the Hostinger connector (`vps_docker_update`). Confirm the new report is live at https://xpressiq.co.uk before telling Robert.
@@ -68,7 +59,7 @@ The site lives in the `site/` folder (repo `Qr4-holding/xpressiq-reports`). It i
 `site/server.js` (Node/Express) serves the static pages with clean URLs and takes the two forms: `POST /api/subscribe` and `POST /api/commission`. Every submission is appended to `/data/leads.jsonl` in the `leads` volume on the VPS, and emailed to `CONTACT_TO` when `RESEND_API_KEY` is set in the project environment. The destination address lives only in the server environment; it never appears in the repo or on a page. To read leads without email: `vps_docker_containers` → the web container → `cat /data/leads.jsonl`, or ask Robert to add the Resend key.
 
 ## House rules
-- Intro and outro are the same every week. Only the title changes. Do not add music, stingers or extra slides.
+- Intro and outro are the same every week. Only the title changes. The intro stays silent; do not add music, stingers, voice or extra slides.
 - Outro carries exactly: logo, strapline, the one CTA line, `Contact@XpressIQ.co.uk`, the copyright. Nothing else.
 - Fonts: the renderer uses Inter Display (Bold) and Inter (Medium) from `/usr/share/fonts/opentype/inter/`; if Manrope/DM Sans are installed later, point `config.json` `fonts` at them to match the website exactly.
 - Never put the downloaded VO URLs or any credential in the repo.

@@ -56,13 +56,13 @@
         "16x9": {
           "file": "videos/agent-governance-16x9.mp4",
           "poster": "thumbs/agent-governance-16x9.jpg",
-          "duration": "9:16",
+          "duration": "9:04",
           "title": "AI Agent Governance — full briefing"
         },
         "9x16": {
           "file": "videos/agent-governance-9x16.mp4",
           "poster": "thumbs/agent-governance-9x16.jpg",
-          "duration": "1:47",
+          "duration": "1:42",
           "title": "Why 40% of AI agents will fail"
         }
       },
@@ -82,13 +82,13 @@
         "16x9": {
           "file": "videos/everyday-workflows-16x9.mp4",
           "poster": "thumbs/everyday-workflows-16x9.jpg",
-          "duration": "8:06",
+          "duration": "7:55",
           "title": "The Missing Middle in AI — full briefing"
         },
         "9x16": {
           "file": "videos/everyday-workflows-9x16.mp4",
           "poster": "thumbs/everyday-workflows-9x16.jpg",
-          "duration": "1:55",
+          "duration": "1:50",
           "title": "Everyday business workflows ready for AI"
         }
       },

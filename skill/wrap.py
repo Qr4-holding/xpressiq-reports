@@ -100,15 +100,40 @@ def draw_intro_card(cfg, W, H, title, play=False):
     return im
 
 def render_intro_frames(cfg, W, H, fps, dur, title, outdir):
-    """Static card (so frame 0 is the thumbnail), fading to the brand dark in the last 0.5 s."""
-    bg = hexrgb(cfg["colors"]["dark"])
+    """Silent motion intro. Frame 0 is the complete card (so it doubles as the thumbnail);
+    the lime rule then re-sweeps left to right, the dot pops, and the card fades to the video."""
+    C = cfg["colors"]; bg = hexrgb(C["dark"]); lime = hexrgb(C["lime"])
+    portrait = H > W
+    S = W / 1280 if not portrait else W / 720
+    logo_size = int((120 if not portrait else 84) * S)
+    rule_y = int(H * (0.37 if not portrait else 0.40)); rh = max(2, int(3 * S))
+    x0, x1 = int(W * 0.08), int(W * 0.92)
     card = draw_intro_card(cfg, W, H, title)
+    # dot position (mirrors draw_logo)
+    fL = font(cfg, "display", logo_size); d0 = ImageDraw.Draw(card)
+    wx = d0.textlength("Xpress", font=fL) + d0.textlength("IQ", font=fL)
+    r = logo_size * 0.11; cx = x0 + wx + logo_size * 0.22; cy = (rule_y - int(logo_size * 1.25)) + logo_size * 0.62
     dark = Image.new("RGB", (W, H), bg)
     n = int(dur * fps)
+    sweep_start, sweep_len = 0.15, 0.7
     for i in range(n):
         t = i / fps
-        fo = ease((dur - t) / 0.5)
-        im = card if fo >= 1 else Image.blend(dark, card, fo)
+        im = card.copy(); d = ImageDraw.Draw(im)
+        if sweep_start <= t < sweep_start + sweep_len + 0.05:
+            # wipe the rule and redraw it growing, with a bright head
+            a = ease((t - sweep_start) / sweep_len)
+            d.rectangle((x0, rule_y, x1, rule_y + rh), fill=bg)
+            xe = int(x0 + (x1 - x0) * a)
+            d.rectangle((x0, rule_y, xe, rule_y + rh), fill=lime)
+            d.rectangle((max(x0, xe - int(28 * S)), rule_y - rh, xe, rule_y + 2 * rh), fill=(234, 255, 180))
+        # dot pop: shrinks then overshoots back
+        if 0.3 <= t < 1.3:
+            u = (t - 0.3) / 1.0; k = ease(u); scale = 0.2 + 1.0 * k + 0.25 * math.sin(math.pi * u) * (1 - k)
+            rr = r * scale
+            d.ellipse((cx - r * 1.3, cy - r * 1.3, cx + r * 1.3, cy + r * 1.3), fill=bg)
+            d.ellipse((cx - rr, cy - rr, cx + rr, cy + rr), fill=lime)
+        fo = ease((dur - t) / 0.35)
+        if fo < 1: im = Image.blend(dark, im, fo)
         im.save(outdir / f"i{i:05d}.png")
     return n
 
@@ -212,13 +237,10 @@ def cmd_wrap(a):
     W, H, fps, _ = probe(a.video); fps = 30 if fps > 29 else 24 if fps < 26 else 25
     work = pathlib.Path(tempfile.mkdtemp(prefix="xiqwrap_"))
     # --- intro timing: brand VO at 0.3s, title VO after it
-    brand_vo = HERE / cfg["voice"]["intro_file"]; outro_vo = HERE / cfg["voice"]["outro_file"]
-    tracks = [(brand_vo, 0.3)]; tlen = 0.0
-    if a.title_vo:
-        tlen = audio_len(a.title_vo); tracks.append((pathlib.Path(a.title_vo), 0.3 + audio_len(brand_vo) + 0.35))
-    intro_dur = max(cfg["intro"]["min_seconds"], 0.3 + audio_len(brand_vo) + 0.35 + tlen + 1.0)
+    outro_vo = HERE / cfg["voice"]["outro_file"]
+    intro_dur = cfg["intro"]["seconds"]
     n = render_intro_frames(cfg, W, H, fps, intro_dur, a.title or "", work)
-    frames_to_clip(str(work / "i%05d.png"), fps, W, H, tracks, intro_dur, work / "intro.mp4")
+    frames_to_clip(str(work / "i%05d.png"), fps, W, H, [], intro_dur, work / "intro.mp4")
     # --- outro
     outro_dur = max(cfg["outro"]["min_seconds"], 0.6 + audio_len(outro_vo) + 1.2)
     render_outro_frames(cfg, W, H, fps, outro_dur, work)
@@ -244,14 +266,12 @@ def cmd_cards(a):
     cfg = json.loads(pathlib.Path(a.config).read_text())
     for (W, H) in [(1280, 720), (720, 1280)]:
         work = pathlib.Path(tempfile.mkdtemp(prefix="xiqcards_")); fps = 30
-        brand_vo = HERE / cfg["voice"]["intro_file"]; outro_vo = HERE / cfg["voice"]["outro_file"]
-        tracks = [(brand_vo, 0.3)]; tlen = 0
-        if a.title_vo: tlen = audio_len(a.title_vo); tracks.append((pathlib.Path(a.title_vo), 0.3 + audio_len(brand_vo) + 0.35))
-        idur = max(cfg["intro"]["min_seconds"], 0.3 + audio_len(brand_vo) + 0.35 + tlen + 1.0)
+        outro_vo = HERE / cfg["voice"]["outro_file"]
+        idur = cfg["intro"]["seconds"]
         render_intro_frames(cfg, W, H, fps, idur, a.title or "", work)
         tag = "16x9" if W > H else "9x16"
         outd = pathlib.Path(a.out); outd.mkdir(parents=True, exist_ok=True)
-        frames_to_clip(str(work / "i%05d.png"), fps, W, H, tracks, idur, outd / f"intro-{tag}.mp4")
+        frames_to_clip(str(work / "i%05d.png"), fps, W, H, [], idur, outd / f"intro-{tag}.mp4")
         odur = max(cfg["outro"]["min_seconds"], 0.6 + audio_len(outro_vo) + 1.2)
         render_outro_frames(cfg, W, H, fps, odur, work)
         frames_to_clip(str(work / "o%05d.png"), fps, W, H, [(outro_vo, 0.6)], odur, outd / f"outro-{tag}.mp4")
@@ -260,7 +280,7 @@ def cmd_cards(a):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(); sub = ap.add_subparsers(dest="cmd", required=True)
     w = sub.add_parser("wrap"); w.add_argument("--config", required=True); w.add_argument("--video", required=True); w.add_argument("--out", required=True)
-    w.add_argument("--title", default=""); w.add_argument("--title-vo", default=None)
+    w.add_argument("--title", default=""); w.add_argument("--title-vo", default=None, help="ignored: the intro is silent")
     w.add_argument("--trim-end", type=float, default=None, help="seconds to cut from the source end (default: auto-detect the end card)"); w.set_defaults(fn=cmd_wrap)
     c = sub.add_parser("render-cards"); c.add_argument("--config", required=True); c.add_argument("--out", required=True)
     c.add_argument("--title", default=""); c.add_argument("--title-vo", default=None); c.set_defaults(fn=cmd_cards)
