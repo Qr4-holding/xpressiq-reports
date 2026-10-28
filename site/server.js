@@ -53,7 +53,10 @@ app.post("/api/commission", (req, res) => lead("commission", req, res));
 
 // static site with clean URLs (/gallery -> gallery.html, /reports/slug -> reports/slug.html)
 const ROOT = path.join(__dirname);
-app.use(express.static(ROOT, { extensions: ["html"], maxAge: "1h", setHeaders: (res, p) => { if (p.endsWith(".mp4")) res.setHeader("Cache-Control", "public, max-age=604800"); } }));
+app.use(express.static(ROOT, { extensions: ["html"], maxAge: "1h", setHeaders: (res, p) => {
+  if (p.endsWith(".html")) res.setHeader("Cache-Control", "no-cache");
+  else if (p.endsWith(".mp4") || p.endsWith(".jpg")) res.setHeader("Cache-Control", "public, max-age=604800");
+} }));
 app.use((req, res) => res.status(404).sendFile(path.join(ROOT, "404.html"), (err) => { if (err) res.status(404).send("Not found"); }));
 
 app.listen(PORT, () => console.log(`xpressiq site on :${PORT}, leads -> ${DATA_DIR}, mail ${RESEND_API_KEY && CONTACT_TO ? "on" : "off (file only)"}`));

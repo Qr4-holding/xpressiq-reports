@@ -20,7 +20,7 @@ def v(path):
     import hashlib
     f = ROOT / path
     if not f.exists(): return path
-    st = f.stat(); h = hashlib.md5(f"{st.st_size}-{int(st.st_mtime)}".encode()).hexdigest()[:8]
+    h = hashlib.md5(f.read_bytes()).hexdigest()[:8]
     return f"{path}?v={h}"
 
 def head(title, desc, depth=0, url="", image="", video=""):
@@ -33,7 +33,7 @@ def head(title, desc, depth=0, url="", image="", video=""):
 <title>{esc(title)}</title><meta name="description" content="{esc(desc)}">{og}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{base}assets/site.css"></head><body>"""
+<link rel="stylesheet" href="{base}{v('assets/site.css')}"></head><body>"""
 
 def nav(active, depth=0):
     b = "../" * depth
@@ -69,7 +69,7 @@ def optin(depth=0, report_slug="", compact=False):
 <form data-api="/api/subscribe" data-done="Subscribed" data-thanks="You're on the list. The next report comes to your inbox." method="post" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">{hid}<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true"><label for="email-{report_slug or 'home'}" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Email address</label><input id="email-{report_slug or 'home'}" name="email" type="email" placeholder="you@company.co.uk" required style="flex:1 1 220px;min-height:48px;padding:0 16px;border-radius:6px;border:1px solid #4e6b67;background:#0b1f22;color:#fff"><button type="submit" class="btn btn-lime">Send me the report</button><p class="formmsg" role="status" style="flex-basis:100%;margin:0;font-size:14px;color:#bdf453"></p></form>
 <p style="font-size:12px;color:#8fa8a0">For founders, owners, investors and advisers who move on opportunity.</p></div>"""
 
-def _ic(d): return f'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="{d}"/></svg>'
+def _ic(d): return f'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:20px;height:20px"><path d="{d}"/></svg>'
 ICONS = {
  "share": _ic("M18 16a3 3 0 0 0-2.4 1.2l-7-4.1a3 3 0 0 0 0-2.2l7-4.1A3 3 0 1 0 15 5c0 .3 0 .6.1.9l-7 4.1a3 3 0 1 0 0 4l7 4.1A3 3 0 1 0 18 16"),
  "wa": _ic("M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6.3-.5c.1-.2 0-.4 0-.5L9 6.7c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.5-.2M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2m0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2"),
