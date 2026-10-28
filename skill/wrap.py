@@ -257,6 +257,8 @@ def cmd_wrap(a):
     # poster = the intro card; embed it as cover art so players and galleries show it
     poster = out.with_suffix(".jpg")
     draw_intro_card(cfg, W, H, a.title or "", play=True).save(poster, quality=90, optimize=True)
+    # link-preview card for WhatsApp / LinkedIn / X: 1200x630, always landscape
+    draw_intro_card(cfg, 1200, 630, a.title or "", play=True).save(out.parent / (out.stem + "-share.jpg"), quality=86, optimize=True)
     run(["ffmpeg", "-y", "-v", "error", "-i", str(work / "joined.mp4"), "-i", str(poster), "-map", "0", "-map", "1",
          "-c", "copy", "-disposition:v:1", "attached_pic", "-movflags", "+faststart", str(out)])
     print(f"wrote {out} + {poster.name}  ({W}x{H} @ {fps}fps; intro {intro_dur:.1f}s, body trimmed {trim:.2f}s, outro {outro_dur:.1f}s)")

@@ -25,12 +25,13 @@ def v(path):
 
 def head(title, desc, depth=0, url="", image="", video=""):
     base = "../" * depth
-    og = f'<meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:site_name" content="XpressIQ"><meta property="og:type" content="{'video.other' if video else 'website'}">'
-    if url: og += f'<meta property="og:url" content="{esc(url)}">'
-    if image: og += f'<meta property="og:image" content="{esc(image)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="{esc(image)}">'
-    if video: og += f'<meta property="og:video" content="{esc(video)}"><meta property="og:video:type" content="video/mp4">'
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{esc(title)}</title><meta name="description" content="{esc(desc)}">{og}
+    og = f'<meta property="og:type" content="website"><meta property="og:site_name" content="XpressIQ"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}">'
+    if url: og += f'<meta property="og:url" content="{esc(url)}"><link rel="canonical" href="{esc(url)}">'
+    if image: og += (f'<meta property="og:image" content="{esc(image)}"><meta property="og:image:secure_url" content="{esc(image)}">'
+                     f'<meta property="og:image:type" content="image/jpeg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'
+                     f'<meta property="og:image:alt" content="{esc(title)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{esc(title)}"><meta name="twitter:description" content="{esc(desc)}"><meta name="twitter:image" content="{esc(image)}">')
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">{og}<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{esc(title)}</title><meta name="description" content="{esc(desc)}">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{base}{v('assets/site.css')}"></head><body>"""
@@ -56,7 +57,18 @@ def footer(depth=0):
 </div></footer>
 <script>
 document.querySelectorAll('.thumb').forEach(t=>{{const v=t.querySelector('video');if(!v)return;t.addEventListener('click',e=>{{if(e.target.closest('.rail'))return;if(t.classList.contains('playing'))return;t.classList.add('playing');v.controls=true;v.play();}});v.addEventListener('ended',()=>{{t.classList.remove('playing');v.controls=false;}});
-const b=t.querySelector('.ri-share');if(!b)return;b.addEventListener('click',async e=>{{e.stopPropagation();const url=b.dataset.url,text=b.dataset.text;if(navigator.share){{try{{await navigator.share({{title:text,text:text,url:url}});return;}}catch(err){{if(err&&err.name==='AbortError')return;}}}}try{{await navigator.clipboard.writeText(url);const l=b.querySelector('span');l.textContent='Copied';setTimeout(()=>l.textContent='Share',1500);}}catch(err){{prompt('Copy this link',url);}}}});}});
+const b=t.querySelector('.ri-share');if(!b)return;const lab=b.querySelector('span');let ready=null,busy=false;
+const fname=()=> (b.dataset.text||'XpressIQ').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,60)+'.mp4';
+const linkShare=async()=>{{const url=b.dataset.url,text=b.dataset.text;if(navigator.share){{try{{await navigator.share({{title:text,text:text,url:url}});}}catch(e){{}}return;}}try{{await navigator.clipboard.writeText(url);lab.textContent='Copied';setTimeout(()=>lab.textContent='Share',1500);}}catch(e){{prompt('Copy this link',url);}}}};
+const fileShare=async f=>{{await navigator.share({{files:[f],title:b.dataset.text,text:b.dataset.text+' '+b.dataset.url}});}};
+b.addEventListener('click',async e=>{{e.stopPropagation();const fu=b.dataset.file;
+ if(!fu||!navigator.canShare||!navigator.canShare({{files:[new File([new Blob()],'x.mp4',{{type:'video/mp4'}})]}})){{return linkShare();}}
+ if(ready){{try{{await fileShare(ready);}}catch(err){{if(err.name!=='AbortError')linkShare();}}lab.textContent='Share';return;}}
+ if(busy)return;busy=true;lab.textContent='Preparing';
+ try{{const r=await fetch(fu);const blob=await r.blob();ready=new File([blob],fname(),{{type:'video/mp4'}});busy=false;
+   try{{await fileShare(ready);lab.textContent='Share';}}catch(err){{if(err.name==='NotAllowedError'){{lab.textContent='Tap to send';}}else if(err.name==='AbortError'){{lab.textContent='Share';}}else{{lab.textContent='Share';linkShare();}}}}
+ }}catch(err){{busy=false;lab.textContent='Share';linkShare();}}
+}});}});
 document.querySelectorAll('form[data-api]').forEach(f=>{{f.addEventListener('submit',async e=>{{e.preventDefault();const btn=f.querySelector('button[type=submit]');const msg=f.querySelector('.formmsg');const data=Object.fromEntries(new FormData(f).entries());btn.disabled=true;try{{const r=await fetch(f.dataset.api,{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(data)}});const j=await r.json();if(j.ok){{f.querySelectorAll('input,textarea,select').forEach(i=>i.disabled=true);btn.textContent=f.dataset.done||'Done';msg.textContent=f.dataset.thanks||'Thank you.';}}else{{msg.textContent=j.error||'Something went wrong. Please try again.';btn.disabled=false;}}}}catch(err){{msg.textContent='Could not send just now. Please try again in a moment.';btn.disabled=false;}}}});}});
 </script></body></html>"""
 
@@ -79,7 +91,19 @@ ICONS = {
  "ln": _ic("M10.6 13.4a1 1 0 0 1 0-1.4l3.4-3.4a3 3 0 0 1 4.2 4.2l-1.5 1.5-1.4-1.4 1.5-1.5a1 1 0 0 0-1.4-1.4l-3.4 3.4a1 1 0 0 0 1.4 1.4l.7-.7 1.4 1.4-.7.7a3 3 0 0 1-4.2-4.2m2.8-2.8a1 1 0 0 1 0 1.4L10 15.4a3 3 0 0 1-4.2-4.2l1.5-1.5 1.4 1.4-1.5 1.5a1 1 0 0 0 1.4 1.4l3.4-3.4"),
 }
 
-def share_overlay(url, text):
+def share_img(vid):
+    """1200x630 preview card if present, else the poster."""
+    p = vid["poster"].replace(".jpg", "-share.jpg")
+    return p if (ROOT / p).exists() else vid["poster"]
+
+def stamp(url, vid):
+    """Fresh query stamp per preview image so WhatsApp/LinkedIn build a new preview instead of a cached blank one."""
+    import hashlib
+    f = ROOT / share_img(vid)
+    h = hashlib.md5(f.read_bytes()).hexdigest()[:6] if f.exists() else "1"
+    return f"{url}?s={h}"
+
+def share_overlay(url, text, file_url=""):
     """YouTube-style action rail down the right edge of a video: Share (system share sheet, or copy link),
     WhatsApp, X, LinkedIn. Always visible, including during playback."""
     import urllib.parse as u
@@ -87,7 +111,7 @@ def share_overlay(url, text):
     def item(tag, inner, cls="", attrs=""):
         return f'<{tag} class="ri {cls}" {attrs}>{inner}</{tag}>'
     return ('<div class="rail" role="group" aria-label="Share this video">'
-            + item("button", f'{ICONS["share"]}<span>Share</span>', "ri-share", f'type="button" data-url="{esc(url)}" data-text="{esc(text)}" aria-label="Share"')
+            + item("button", f'{ICONS["share"]}<span>Share</span>', "ri-share", f'type="button" data-url="{esc(url)}" data-text="{esc(text)}" data-file="{esc(file_url)}" aria-label="Share"')
             + item("a", f'{ICONS["wa"]}<span>WhatsApp</span>', "", f'href="https://wa.me/?text={t}%20{q}" target="_blank" rel="noopener" aria-label="Share on WhatsApp"')
             + item("a", f'{ICONS["x"]}<span>X</span>', "", f'href="https://x.com/intent/post?url={q}&text={t}" target="_blank" rel="noopener" aria-label="Share on X"')
             + item("a", f'{ICONS["li"]}<span>LinkedIn</span>', "", f'href="https://www.linkedin.com/sharing/share-offsite/?url={q}" target="_blank" rel="noopener" aria-label="Share on LinkedIn"')
@@ -119,12 +143,13 @@ def thumb(r, kind, depth=0, big_title=None):
     b = "../" * depth
     vid = r["videos"].get(kind)
     share_url = f"{BASE_URL}/shorts/{r['slug']}" if kind == "9x16" else f"{BASE_URL}/reports/{r['slug']}"
+    if vid: share_url = stamp(share_url, vid)
     ratio = "r169" if kind == "16x9" else "r916"
     brand = '<span class="brand" aria-hidden="true">Xpress<i>IQ</i></span>'
     if vid:
         return (f'<div class="thumb {ratio}" tabindex="0" role="button" aria-label="Play: {esc(vid["title"])}">'
                 f'<video preload="metadata" playsinline poster="{b}{v(vid["poster"])}" src="{b}{v(vid["file"])}"></video>'
-                f'{brand}{PLAY}<span class="dur">{vid["duration"]}</span>{share_overlay(share_url, vid["title"])}</div>')
+                f'{brand}{PLAY}<span class="dur">{vid["duration"]}</span>{share_overlay(share_url, vid["title"], (b + v(vid["file"])) if kind == "9x16" else "")}</div>')
     t = big_title or r["title"]
     return (f'<div class="thumb {ratio}" aria-label="{esc(t)} – video coming">'
             f'<div class="ph"><strong>{esc(t)}</strong><span>[VIDEO COMING]</span></div>{brand}{PLAY}</div>')
@@ -152,7 +177,7 @@ def build_index():
     radar_items = [f'<div style="display:flex;justify-content:space-between;gap:16px;padding:17px 0;border-bottom:1px solid #d3dfd2;align-items:center"><div style="display:flex;gap:16px;align-items:baseline"><span style="color:#80a850;font-size:12px;font-weight:700;font-family:Manrope,sans-serif">{i+1:02d}</span><strong style="font-size:16px">{esc(x)}</strong></div><span class="tag tag-hyp">Hypothesis</span></div>' for i,x in enumerate(MANIFEST["radar"])]
     radar_html = f'<div class="grid2" style="gap:0 48px"><div style="border-top:1px solid #d3dfd2">{"".join(radar_items[:half])}</div><div style="border-top:1px solid #d3dfd2">{"".join(radar_items[half:])}</div></div>'
     nx = MANIFEST["next"]
-    out = head(f"XpressIQ — Fast Movers First. {L['title']}", "Weekly intelligence reports for people who move on opportunity. Every claim traced, every finding graded, every report ends with a next move.", url=BASE_URL + "/", image=(f"{BASE_URL}/{L['videos']['16x9']['poster']}" if L['videos'].get('16x9') else ""))
+    out = head(f"XpressIQ — Fast Movers First. {L['title']}", "Weekly intelligence reports for people who move on opportunity. Every claim traced, every finding graded, every report ends with a next move.", url=BASE_URL + "/", image=(f"{BASE_URL}/{share_img(L['videos']['16x9'])}" if L['videos'].get('16x9') else ""))
     out += nav("home")
     out += f"""<main>
 <section class="wrap hero" id="top">
@@ -272,7 +297,7 @@ def build_report(i, r):
     pager = f'<div class="pager"><span>{("<a href=\"" + prev_r["slug"] + ".html\">← Previous: " + esc(prev_r["title"]) + "</a>") if prev_r else ""}</span><span>{("<a href=\"" + next_r["slug"] + ".html\">Next: " + esc(next_r["title"]) + " →</a>") if next_r else "<a href=\"../index.html#subscribe\">Get next week's report →</a>"}</span></div>'
     url = f"{BASE_URL}/reports/{r['slug']}"
     v16 = r["videos"].get("16x9")
-    out = head(f"{r['title']} — XpressIQ Fast Movers First report {r['number']:02d}", r["summary"], depth=1, url=url, image=(f"{BASE_URL}/{v16['poster']}" if v16 else ""), video=(f"{BASE_URL}/{v16['file']}" if v16 else ""))
+    out = head(f"{r['title']} — XpressIQ Fast Movers First report {r['number']:02d}", r["summary"], depth=1, url=url, image=(f"{BASE_URL}/{share_img(v16)}" if v16 else ""))
     out += nav("reports", depth=1)
     out += f"""<main><section class="section wrap"><article class="report">
 <div class="eyebrow"><span class="dot"></span>Fast Movers First · Report {r['number']:02d} · {esc(r['date_label'])}</div>
@@ -292,7 +317,7 @@ def build_short(r):
     vid = r["videos"].get("9x16")
     if not vid: return
     url = f"{BASE_URL}/shorts/{r['slug']}"
-    out = head(f"{vid['title']} — XpressIQ short", r["summary"], depth=1, url=url, image=f"{BASE_URL}/{vid['poster']}", video=f"{BASE_URL}/{vid['file']}")
+    out = head(f"{vid['title']} — XpressIQ short", r["summary"], depth=1, url=url, image=f"{BASE_URL}/{share_img(vid)}")
     out += nav("gallery", depth=1)
     out += f"""<main><section class="section wrap"><div class="grid2" style="align-items:start;max-width:980px;margin:0 auto">
 <div style="max-width:420px;margin:0 auto;width:100%">{thumb(r,'9x16',1)}</div>

@@ -1,5 +1,5 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Commission a Fast Movers First report — XpressIQ</title><meta name="description" content="Put your own market, sector or idea through the XpressIQ method: researched, traced, graded, ended with the next move."><meta property="og:title" content="Commission a Fast Movers First report — XpressIQ"><meta property="og:description" content="Put your own market, sector or idea through the XpressIQ method: researched, traced, graded, ended with the next move."><meta property="og:site_name" content="XpressIQ"><meta property="og:type" content="website">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta property="og:type" content="website"><meta property="og:site_name" content="XpressIQ"><meta property="og:title" content="Commission a Fast Movers First report — XpressIQ"><meta property="og:description" content="Put your own market, sector or idea through the XpressIQ method: researched, traced, graded, ended with the next move."><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Commission a Fast Movers First report — XpressIQ</title><meta name="description" content="Put your own market, sector or idea through the XpressIQ method: researched, traced, graded, ended with the next move.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/site.css?v=23546acf"></head><body><header class="nav"><div class="wrap">
@@ -36,6 +36,17 @@
 </div></footer>
 <script>
 document.querySelectorAll('.thumb').forEach(t=>{const v=t.querySelector('video');if(!v)return;t.addEventListener('click',e=>{if(e.target.closest('.rail'))return;if(t.classList.contains('playing'))return;t.classList.add('playing');v.controls=true;v.play();});v.addEventListener('ended',()=>{t.classList.remove('playing');v.controls=false;});
-const b=t.querySelector('.ri-share');if(!b)return;b.addEventListener('click',async e=>{e.stopPropagation();const url=b.dataset.url,text=b.dataset.text;if(navigator.share){try{await navigator.share({title:text,text:text,url:url});return;}catch(err){if(err&&err.name==='AbortError')return;}}try{await navigator.clipboard.writeText(url);const l=b.querySelector('span');l.textContent='Copied';setTimeout(()=>l.textContent='Share',1500);}catch(err){prompt('Copy this link',url);}});});
+const b=t.querySelector('.ri-share');if(!b)return;const lab=b.querySelector('span');let ready=null,busy=false;
+const fname=()=> (b.dataset.text||'XpressIQ').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,60)+'.mp4';
+const linkShare=async()=>{const url=b.dataset.url,text=b.dataset.text;if(navigator.share){try{await navigator.share({title:text,text:text,url:url});}catch(e){}return;}try{await navigator.clipboard.writeText(url);lab.textContent='Copied';setTimeout(()=>lab.textContent='Share',1500);}catch(e){prompt('Copy this link',url);}};
+const fileShare=async f=>{await navigator.share({files:[f],title:b.dataset.text,text:b.dataset.text+' '+b.dataset.url});};
+b.addEventListener('click',async e=>{e.stopPropagation();const fu=b.dataset.file;
+ if(!fu||!navigator.canShare||!navigator.canShare({files:[new File([new Blob()],'x.mp4',{type:'video/mp4'})]})){return linkShare();}
+ if(ready){try{await fileShare(ready);}catch(err){if(err.name!=='AbortError')linkShare();}lab.textContent='Share';return;}
+ if(busy)return;busy=true;lab.textContent='Preparing';
+ try{const r=await fetch(fu);const blob=await r.blob();ready=new File([blob],fname(),{type:'video/mp4'});busy=false;
+   try{await fileShare(ready);lab.textContent='Share';}catch(err){if(err.name==='NotAllowedError'){lab.textContent='Tap to send';}else if(err.name==='AbortError'){lab.textContent='Share';}else{lab.textContent='Share';linkShare();}}
+ }catch(err){busy=false;lab.textContent='Share';linkShare();}
+});});
 document.querySelectorAll('form[data-api]').forEach(f=>{f.addEventListener('submit',async e=>{e.preventDefault();const btn=f.querySelector('button[type=submit]');const msg=f.querySelector('.formmsg');const data=Object.fromEntries(new FormData(f).entries());btn.disabled=true;try{const r=await fetch(f.dataset.api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const j=await r.json();if(j.ok){f.querySelectorAll('input,textarea,select').forEach(i=>i.disabled=true);btn.textContent=f.dataset.done||'Done';msg.textContent=f.dataset.thanks||'Thank you.';}else{msg.textContent=j.error||'Something went wrong. Please try again.';btn.disabled=false;}}catch(err){msg.textContent='Could not send just now. Please try again in a moment.';btn.disabled=false;}});});
 </script></body></html>
