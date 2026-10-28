@@ -46,7 +46,7 @@ python3 wrap.py wrap --config config.json \
 Three things it does on its own, every time:
 - **Cuts the NotebookLM end card.** It scans the last 8 s of the source for the flat "Gemini Notebook" card and trims just before it, so the XpressIQ outro covers it. If it cannot find one it trims `body.trim_end_seconds` (3.0 s) from `config.json`. Override with `--trim-end <seconds>` when a source has no card (pass `0`).
 - **Makes the first frame the thumbnail.** The intro card is fully drawn from frame 0 (logo, FAST MOVERS FIRST, the title, "XpressIQ · Fast Movers First report summary"), so a player that shows the first frame shows the branded card, never black.
-- **Writes a poster and embeds it.** `out/<slug>-16x9.jpg` (and `-9x16.jpg`) is the same card as a JPEG; it is also embedded in the mp4 as cover art. Use that JPEG as the site poster and as the upload thumbnail on YouTube, LinkedIn or TikTok.
+- **Writes a poster and embeds it.** `out/<slug>-16x9.jpg` (and `-9x16.jpg`) is the same card as a JPEG with a lime play button bottom-right; it is also embedded in the mp4 as cover art. Use that JPEG as the site poster and as the upload thumbnail on YouTube, LinkedIn or TikTok.
 
 Check the output: `ffprobe` the duration (roughly source − 3 s + 14.5 s intro + 12 s outro for a 16:9 with title VO; source − 3 s + 7.8 s + 12 s for a short) and pull one frame from the intro (`-ss 3`) and one from the outro (`-ss <dur-4>`) to confirm the cards rendered.
 
@@ -58,10 +58,14 @@ The site lives in the `site/` folder (repo `Qr4-holding/xpressiq-reports`). It i
 1. Copy the wrapped videos to `site/videos/<slug>-16x9.mp4` and `site/videos/<slug>-9x16.mp4`.
 2. Copy the posters `wrap.py` wrote (`out/<slug>-16x9.jpg`, `out/<slug>-9x16.jpg`) to `site/thumbs/`.
 3. Copy the `.md` to `site/reports/<slug>.md`.
-4. Add a new object at the **top** of `reports` in `site/reports.json` (newest first = featured on the home page). Fields: `number`, `slug`, `title`, `date_label`, `standfirst`, `summary`, `next_move`, `grades` (each `{grade, claim, note}` with grade one of `Traced`, `Attributed`, `Framework`, `Hypothesis`, `Illustrative`, `Not substantiated`), `videos.16x9` and `videos.9x16` (`file`, `poster`, `duration` as m:ss of the **wrapped** file, `title`). Write the grades from the report's own sources; every claim must name where it came from.
+4. Add a new object at the **top** of `reports` in `site/reports.json` (newest first = featured on the home page). Fields: `number`, `slug`, `title`, `date_label`, `standfirst`, `summary`, `next_move`, `access` (`free`, or `members` to show only the first section and a members panel), `grades` (each `{grade, claim, note}` with grade one of `Traced`, `Attributed`, `Framework`, `Hypothesis`, `Illustrative`, `Not substantiated`), `videos.16x9` and `videos.9x16` (`file`, `poster`, `duration` as m:ss of the **wrapped** file, `title`). Write the grades from the report's own sources; every claim must name where it came from.
+   The build puts an email opt-in after the first section of every report and another at the end; nothing to add by hand.
 5. Update `next` in `reports.json` to the following week's topic.
 6. `cd site && python3 build.py`, then open `index.html` and `reports/<slug>.html` in a headless browser and screenshot at 1360 px and 390 px wide to check nothing has broken.
-7. Commit and push to `main`. The VPS container clones `main` on start, so after pushing, restart the Docker project `xpressiq` on VPS `2079067` with the Hostinger connector (`vps_docker_update`). Confirm the new report is live at the site address before telling Robert.
+7. Commit and push to `main`. The VPS container clones `main` on start, so after pushing, restart the Docker project `xpressiq` on VPS `2079067` with the Hostinger connector (`vps_docker_update`). Confirm the new report is live at https://xpressiq.co.uk before telling Robert.
+
+## How the site runs (for debugging only)
+`site/server.js` (Node/Express) serves the static pages with clean URLs and takes the two forms: `POST /api/subscribe` and `POST /api/commission`. Every submission is appended to `/data/leads.jsonl` in the `leads` volume on the VPS, and emailed to `CONTACT_TO` when `RESEND_API_KEY` is set in the project environment. The destination address lives only in the server environment; it never appears in the repo or on a page. To read leads without email: `vps_docker_containers` → the web container → `cat /data/leads.jsonl`, or ask Robert to add the Resend key.
 
 ## House rules
 - Intro and outro are the same every week. Only the title changes. Do not add music, stingers or extra slides.

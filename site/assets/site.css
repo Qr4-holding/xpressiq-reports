@@ -35,6 +35,7 @@ img,video{max-width:100%;display:block}
 .thumb .brand i{font-style:normal;color:var(--lime)}
 .thumb .dur{position:absolute;right:14px;top:14px;font-family:'Manrope',sans-serif;font-weight:700;font-size:12px;background:rgba(13,32,38,.85);color:#fff;padding:4px 8px;border-radius:4px;pointer-events:none}
 .thumb .play{position:absolute;right:16px;bottom:16px;width:68px;height:68px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(0,0,0,.28);pointer-events:none}
+.thumb video ~ .play{display:none}
 .thumb.playing .play,.thumb.playing .brand,.thumb.playing .dur{display:none}
 .thumb .ph{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:24px;background:var(--dark)}
 .thumb .ph strong{font-family:'Manrope',sans-serif;font-weight:800;font-size:30px;line-height:1.08;letter-spacing:-.035em;max-width:360px}
@@ -141,3 +142,9 @@ input,textarea,select{font-family:'DM Sans',sans-serif;font-size:15px}
 .footer .wrap{display:block}.footer p{margin-top:12px}
 }
 @media (min-width:901px){.hero .after{display:none}}
+
+.optin.compact{padding:28px;margin:36px 0;border-radius:10px}
+.optin.compact p{font-size:15px}
+.gate{background:#fff;border:1px solid #c5dca3;border-radius:10px;padding:32px;margin:36px 0;text-align:left}
+.gate p{color:#44585b;font-size:16px;line-height:1.6}
+.report .optin{margin-top:32px}

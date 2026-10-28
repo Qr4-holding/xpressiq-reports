@@ -1,0 +1,8 @@
+{
+  "name": "xpressiq-site",
+  "private": true,
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "build": "python3 build.py" },
+  "dependencies": { "express": "^4.21.2" }
+}

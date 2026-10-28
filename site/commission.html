@@ -17,21 +17,24 @@
 <p style="font-size:14px;color:#5d7073;margin-top:24px">Pricing is agreed per report once the scope is clear. Commissioned reports are private to you unless you choose to publish them.</p>
 </div>
 <div class="panel-light"><div class="eyebrow">Start a report enquiry</div>
-<form action="mailto:Contact@XpressIQ.co.uk" method="post" enctype="text/plain" style="display:flex;flex-direction:column;gap:14px">
-<div class="field"><label for="name">Your name</label><input id="name" name="Name" required></div>
-<div class="field"><label for="org">Company or organisation</label><input id="org" name="Company"></div>
-<div class="field"><label for="from">Email address</label><input id="from" name="Email" type="email" required></div>
-<div class="field"><label for="q">The idea, market or question</label><textarea id="q" name="Question" required></textarea></div>
-<div class="field"><label for="d">What you need to decide</label><textarea id="d" name="Decision"></textarea></div>
-<div class="field"><label for="t">Preferred timeframe</label><select id="t" name="Timeframe"><option>Within a week</option><option>Within two weeks</option><option>Within a month</option><option>No fixed date</option></select></div>
+<form data-api="/api/commission" data-done="Sent" data-thanks="Received. You will hear back within two working days." method="post" style="display:flex;flex-direction:column;gap:14px" id="contact">
+<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+<div class="field"><label for="name">Your name</label><input id="name" name="name" required></div>
+<div class="field"><label for="org">Company or organisation</label><input id="org" name="company"></div>
+<div class="field"><label for="from">Email address</label><input id="from" name="email" type="email" required></div>
+<div class="field"><label for="q">The idea, market or question</label><textarea id="q" name="question" required></textarea></div>
+<div class="field"><label for="d">What you need to decide</label><textarea id="d" name="decision"></textarea></div>
+<div class="field"><label for="t">Preferred timeframe</label><select id="t" name="timeframe"><option>Within a week</option><option>Within two weeks</option><option>Within a month</option><option>No fixed date</option></select></div>
 <button type="submit" class="btn btn-dark">Send enquiry</button>
-<p style="font-size:13px;color:#5d7073;margin:0">This opens your email app addressed to <a href="mailto:Contact@XpressIQ.co.uk">Contact@XpressIQ.co.uk</a>. Or write to that address directly with the three answers above.</p>
+<p class="formmsg" role="status" style="font-size:14px;color:#3f6a1a;margin:0"></p>
+<p style="font-size:13px;color:#5d7073;margin:0">Replies come from XpressIQ within two working days. Nothing you send is shared.</p>
 </form></div>
 </div></section></main><footer class="footer"><div class="wrap">
 <div><a class="logo" href="index.html"><span class="h">Xpress<i style="color:#bdf453">IQ</i></span><small>Fast Movers First</small></a><p style="margin:8px 0 0">Intelligence delivered before you knew you needed it.</p></div>
-<div style="display:flex;gap:24px;flex-wrap:wrap"><a href="index.html#latest">Latest</a><a href="gallery.html">Shorts</a><a href="commission.html">Commission</a><a href="mailto:Contact@XpressIQ.co.uk">Contact@XpressIQ.co.uk</a></div>
+<div style="display:flex;gap:24px;flex-wrap:wrap"><a href="index.html#latest">Latest</a><a href="gallery.html">Shorts</a><a href="commission.html">Commission a report</a><a href="commission.html#contact">Contact</a></div>
 <p style="margin:0;color:#7f9690">© 2026 XpressIQ Limited · <a href="privacy.html">Privacy</a></p>
 </div></footer>
 <script>
 document.querySelectorAll('.thumb').forEach(t=>{const v=t.querySelector('video');if(!v)return;t.addEventListener('click',e=>{if(t.classList.contains('playing'))return;t.classList.add('playing');v.controls=true;v.play();});v.addEventListener('ended',()=>{t.classList.remove('playing');v.controls=false;});});
+document.querySelectorAll('form[data-api]').forEach(f=>{f.addEventListener('submit',async e=>{e.preventDefault();const btn=f.querySelector('button[type=submit]');const msg=f.querySelector('.formmsg');const data=Object.fromEntries(new FormData(f).entries());btn.disabled=true;try{const r=await fetch(f.dataset.api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const j=await r.json();if(j.ok){f.querySelectorAll('input,textarea,select').forEach(i=>i.disabled=true);btn.textContent=f.dataset.done||'Done';msg.textContent=f.dataset.thanks||'Thank you.';}else{msg.textContent=j.error||'Something went wrong. Please try again.';btn.disabled=false;}}catch(err){msg.textContent='Could not send just now. Please try again in a moment.';btn.disabled=false;}});});
 </script></body></html>

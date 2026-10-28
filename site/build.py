@@ -37,12 +37,22 @@ def footer(depth=0):
     y = datetime.date.today().year
     return f"""<footer class="footer"><div class="wrap">
 <div><a class="logo" href="{b}index.html"><span class="h">Xpress<i style="color:#bdf453">IQ</i></span><small>Fast Movers First</small></a><p style="margin:8px 0 0">Intelligence delivered before you knew you needed it.</p></div>
-<div style="display:flex;gap:24px;flex-wrap:wrap"><a href="{b}index.html#latest">Latest</a><a href="{b}gallery.html">Shorts</a><a href="{b}commission.html">Commission</a><a href="mailto:{SITE['email']}">{SITE['email']}</a></div>
+<div style="display:flex;gap:24px;flex-wrap:wrap"><a href="{b}index.html#latest">Latest</a><a href="{b}gallery.html">Shorts</a><a href="{b}commission.html">Commission a report</a><a href="{b}commission.html#contact">Contact</a></div>
 <p style="margin:0;color:#7f9690">© {y} {SITE['company']} · <a href="{b}privacy.html">Privacy</a></p>
 </div></footer>
 <script>
 document.querySelectorAll('.thumb').forEach(t=>{{const v=t.querySelector('video');if(!v)return;t.addEventListener('click',e=>{{if(t.classList.contains('playing'))return;t.classList.add('playing');v.controls=true;v.play();}});v.addEventListener('ended',()=>{{t.classList.remove('playing');v.controls=false;}});}});
+document.querySelectorAll('form[data-api]').forEach(f=>{{f.addEventListener('submit',async e=>{{e.preventDefault();const btn=f.querySelector('button[type=submit]');const msg=f.querySelector('.formmsg');const data=Object.fromEntries(new FormData(f).entries());btn.disabled=true;try{{const r=await fetch(f.dataset.api,{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(data)}});const j=await r.json();if(j.ok){{f.querySelectorAll('input,textarea,select').forEach(i=>i.disabled=true);btn.textContent=f.dataset.done||'Done';msg.textContent=f.dataset.thanks||'Thank you.';}}else{{msg.textContent=j.error||'Something went wrong. Please try again.';btn.disabled=false;}}}}catch(err){{msg.textContent='Could not send just now. Please try again in a moment.';btn.disabled=false;}}}});}});
 </script></body></html>"""
+
+def optin(depth=0, report_slug="", compact=False):
+    """Email opt-in form posting to /api/subscribe. Used on the home page and inside every report."""
+    hid = f'<input type="hidden" name="report" value="{esc(report_slug)}">' if report_slug else ""
+    head_h = '<h2 class="h" style="font-size:40px">Fast movers first.<br>Everyone else, later.</h2>' if not compact else '<h3 class="h" style="font-size:24px;margin:0">Get the next report before it is obvious.</h3>'
+    para = "One email a week with the report, both videos and the sources. No digest, no filler. Unsubscribe in one click." if not compact else "One email a week: the report, both videos, the sources. Unsubscribe in one click."
+    return f"""<div class="panel-dark optin{' compact' if compact else ''}"><div class="eyebrow">Get the weekly report</div>{head_h}<p>{para}</p>
+<form data-api="/api/subscribe" data-done="Subscribed" data-thanks="You're on the list. The next report comes to your inbox." method="post" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">{hid}<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true"><label for="email-{report_slug or 'home'}" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Email address</label><input id="email-{report_slug or 'home'}" name="email" type="email" placeholder="you@company.co.uk" required style="flex:1 1 220px;min-height:48px;padding:0 16px;border-radius:6px;border:1px solid #4e6b67;background:#0b1f22;color:#fff"><button type="submit" class="btn btn-lime">Send me the report</button><p class="formmsg" role="status" style="flex-basis:100%;margin:0;font-size:14px;color:#bdf453"></p></form>
+<p style="font-size:12px;color:#8fa8a0">For founders, owners, investors and advisers who move on opportunity.</p></div>"""
 
 PLAY = '<span class="play" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="#10282b"><path d="M7 4.5v15l13-7.5z"/></svg></span>'
 
@@ -135,9 +145,7 @@ def build_index():
 </section>
 
 <section class="cta" id="subscribe"><div class="wrap cta-grid">
-<div class="panel-dark"><div class="eyebrow">Get the weekly report</div><h2 class="h" style="font-size:40px">Fast movers first.<br>Everyone else, later.</h2><p>One email a week with the report, both videos and the sources. No digest, no filler. Unsubscribe in one click.</p>
-<form action="{SITE['subscribe_action']}" method="post" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px"><label for="email" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Email address</label><input id="email" name="email" type="email" placeholder="you@company.co.uk" required style="flex:1 1 240px;min-height:48px;padding:0 16px;border-radius:6px;border:1px solid #4e6b67;background:#0b1f22;color:#fff"><button type="submit" class="btn btn-lime">Send me the report</button></form>
-<p style="font-size:12px;color:#8fa8a0">For founders, owners, investors and advisers who move on opportunity.</p></div>
+{optin()}
 <div class="panel-light"><div class="eyebrow">Need the method on your own question?</div><h2 class="h" style="font-size:32px">Commission a Fast Movers First report.</h2><p>A market, a sector or an idea you cannot stop thinking about, put through the same process: researched, traced, graded and ended with the next move. Delivered as a written report and two videos.</p><a href="commission.html" class="btn btn-dark" style="align-self:flex-start;margin-top:auto">Start a report enquiry</a></div>
 </div></section>
 </main>"""
@@ -175,15 +183,17 @@ def build_commission():
 <p style="font-size:14px;color:#5d7073;margin-top:24px">Pricing is agreed per report once the scope is clear. Commissioned reports are private to you unless you choose to publish them.</p>
 </div>
 <div class="panel-light"><div class="eyebrow">Start a report enquiry</div>
-<form action="mailto:{SITE['email']}" method="post" enctype="text/plain" style="display:flex;flex-direction:column;gap:14px">
-<div class="field"><label for="name">Your name</label><input id="name" name="Name" required></div>
-<div class="field"><label for="org">Company or organisation</label><input id="org" name="Company"></div>
-<div class="field"><label for="from">Email address</label><input id="from" name="Email" type="email" required></div>
-<div class="field"><label for="q">The idea, market or question</label><textarea id="q" name="Question" required></textarea></div>
-<div class="field"><label for="d">What you need to decide</label><textarea id="d" name="Decision"></textarea></div>
-<div class="field"><label for="t">Preferred timeframe</label><select id="t" name="Timeframe"><option>Within a week</option><option>Within two weeks</option><option>Within a month</option><option>No fixed date</option></select></div>
+<form data-api="/api/commission" data-done="Sent" data-thanks="Received. You will hear back within two working days." method="post" style="display:flex;flex-direction:column;gap:14px" id="contact">
+<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+<div class="field"><label for="name">Your name</label><input id="name" name="name" required></div>
+<div class="field"><label for="org">Company or organisation</label><input id="org" name="company"></div>
+<div class="field"><label for="from">Email address</label><input id="from" name="email" type="email" required></div>
+<div class="field"><label for="q">The idea, market or question</label><textarea id="q" name="question" required></textarea></div>
+<div class="field"><label for="d">What you need to decide</label><textarea id="d" name="decision"></textarea></div>
+<div class="field"><label for="t">Preferred timeframe</label><select id="t" name="timeframe"><option>Within a week</option><option>Within two weeks</option><option>Within a month</option><option>No fixed date</option></select></div>
 <button type="submit" class="btn btn-dark">Send enquiry</button>
-<p style="font-size:13px;color:#5d7073;margin:0">This opens your email app addressed to <a href="mailto:{SITE['email']}">{SITE['email']}</a>. Or write to that address directly with the three answers above.</p>
+<p class="formmsg" role="status" style="font-size:14px;color:#3f6a1a;margin:0"></p>
+<p style="font-size:13px;color:#5d7073;margin:0">Replies come from XpressIQ within two working days. Nothing you send is shared.</p>
 </form></div>
 </div></section></main>"""
     out += footer()
@@ -203,6 +213,13 @@ def build_report(i, r):
     prev_r = REPORTS[i+1] if i+1 < len(REPORTS) else None
     next_r = REPORTS[i-1] if i-1 >= 0 else None
     body = md_to_html((ROOT / "reports" / f"{r['slug']}.md").read_text()) if (ROOT / "reports" / f"{r['slug']}.md").exists() else f'<p class="srcnote">Written report to follow. The videos above carry this week\'s findings.</p>'
+    # opt-in after the first main section; members gate when access != free
+    parts = re.split(r'(?=<h2>)', body)
+    if r.get("access", "free") != "free" and len(parts) > 2:
+        teaser = "".join(parts[:2])
+        body = teaser + f"""<div class="gate"><div class="eyebrow">Members' report</div><h3 class="h" style="font-size:26px;margin:10px 0 8px">The rest of this report is for XpressIQ members.</h3><p>{esc(SITE.get('members_copy','Members get every Fast Movers First report in full, with the evidence grades and sources, the week it is published.'))}</p><a class="btn btn-lime" href="{SITE.get('members_url','../commission.html')}">Become a member</a></div>"""
+    elif len(parts) > 2:
+        body = "".join(parts[:2]) + optin(1, r['slug'], compact=True) + "".join(parts[2:])
     grades = "".join(f'<div class="grade" style="border-color:#dce4dc"><span class="tag {tag_for(g["grade"])}">{esc(g["grade"])}</span><div><strong style="font-family:Manrope,sans-serif;font-size:16px;font-weight:700;display:block;margin-bottom:4px">{esc(g["claim"])}</strong><span style="color:#53666a;font-size:14px;line-height:1.5">{esc(g["note"])}</span></div></div>' for g in r.get("grades",[]))
     pager = f'<div class="pager"><span>{("<a href=\"" + prev_r["slug"] + ".html\">← Previous: " + esc(prev_r["title"]) + "</a>") if prev_r else ""}</span><span>{("<a href=\"" + next_r["slug"] + ".html\">Next: " + esc(next_r["title"]) + " →</a>") if next_r else "<a href=\"../index.html#subscribe\">Get next week's report →</a>"}</span></div>'
     out = head(f"{r['title']} — XpressIQ Fast Movers First report {r['number']:02d}", r["summary"], depth=1)
@@ -215,7 +232,8 @@ def build_report(i, r):
 {('<div class="eyebrow" style="margin-bottom:6px">Evidence grades</div><div class="grades" style="border-color:#dce4dc">' + grades + '</div>') if grades else ''}
 {('<blockquote><p><strong>The next move. </strong>' + esc(r['next_move']) + '</p></blockquote>') if r.get('next_move') else ''}
 {body}
-<p class="srcnote">This report follows the XpressIQ method: one question, researched across sources, written up as a single source of truth with every claim traced to where it came from and graded. The videos are made from this document and add nothing to it. Questions or corrections: <a href="mailto:{SITE['email']}">{SITE['email']}</a>.</p>
+<p class="srcnote">This report follows the XpressIQ method: one question, researched across sources, written up as a single source of truth with every claim traced to where it came from and graded. The videos are made from this document and add nothing to it. Questions, corrections or a report of your own: <a href="../commission.html">commission a report</a>.</p>
+{optin(1, r['slug'])}
 {pager}
 </article></section></main>"""
     out += footer(depth=1)
@@ -225,7 +243,7 @@ def build_privacy():
     out = head("Privacy — XpressIQ", "How XpressIQ handles the information you give it.")
     out += nav("", 0)
     out += f"""<main><section class="section wrap"><article class="report"><h1 class="h" style="font-size:40px">Privacy</h1>
-<p>XpressIQ ({SITE['company']}) collects an email address when you subscribe to the weekly report, and the details you choose to send when you enquire about a commissioned report. That information is used only to send you the report or reply to your enquiry. It is not sold or shared. You can unsubscribe from any email in one click, or ask for your details to be deleted by writing to <a href="mailto:{SITE['email']}">{SITE['email']}</a>.</p>
+<p>XpressIQ ({SITE['company']}) collects an email address when you subscribe to the weekly report, and the details you choose to send when you enquire about a commissioned report. That information is used only to send you the report or reply to your enquiry. It is not sold or shared. You can unsubscribe from any email in one click, or ask for your details to be deleted by replying to any XpressIQ email or using the <a href="commission.html#contact">contact form</a>.</p>
 <p>Videos on this site are hosted on this site. No advertising trackers are used.</p></article></section></main>"""
     out += footer()
     (ROOT / "privacy.html").write_text(out)

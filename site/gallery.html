@@ -18,9 +18,10 @@
 <h3 class="h">The small business AI blind spot.</h3><p>The 90% figure is not substantiated. The 23% is real but measures formal review of in-house AI, not understanding. The useful question is what AI can access, what it costs and who owns it.</p>
 <a class="link" href="reports/small-business-ai-blind-spot.html">Read the full Fast Movers First report →</a></article></div></section></main><footer class="footer"><div class="wrap">
 <div><a class="logo" href="index.html"><span class="h">Xpress<i style="color:#bdf453">IQ</i></span><small>Fast Movers First</small></a><p style="margin:8px 0 0">Intelligence delivered before you knew you needed it.</p></div>
-<div style="display:flex;gap:24px;flex-wrap:wrap"><a href="index.html#latest">Latest</a><a href="gallery.html">Shorts</a><a href="commission.html">Commission</a><a href="mailto:Contact@XpressIQ.co.uk">Contact@XpressIQ.co.uk</a></div>
+<div style="display:flex;gap:24px;flex-wrap:wrap"><a href="index.html#latest">Latest</a><a href="gallery.html">Shorts</a><a href="commission.html">Commission a report</a><a href="commission.html#contact">Contact</a></div>
 <p style="margin:0;color:#7f9690">© 2026 XpressIQ Limited · <a href="privacy.html">Privacy</a></p>
 </div></footer>
 <script>
 document.querySelectorAll('.thumb').forEach(t=>{const v=t.querySelector('video');if(!v)return;t.addEventListener('click',e=>{if(t.classList.contains('playing'))return;t.classList.add('playing');v.controls=true;v.play();});v.addEventListener('ended',()=>{t.classList.remove('playing');v.controls=false;});});
+document.querySelectorAll('form[data-api]').forEach(f=>{f.addEventListener('submit',async e=>{e.preventDefault();const btn=f.querySelector('button[type=submit]');const msg=f.querySelector('.formmsg');const data=Object.fromEntries(new FormData(f).entries());btn.disabled=true;try{const r=await fetch(f.dataset.api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const j=await r.json();if(j.ok){f.querySelectorAll('input,textarea,select').forEach(i=>i.disabled=true);btn.textContent=f.dataset.done||'Done';msg.textContent=f.dataset.thanks||'Thank you.';}else{msg.textContent=j.error||'Something went wrong. Please try again.';btn.disabled=false;}}catch(err){msg.textContent='Could not send just now. Please try again in a moment.';btn.disabled=false;}});});
 </script></body></html>

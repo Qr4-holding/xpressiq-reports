@@ -1,8 +1,8 @@
 {
   "site": {
     "company": "XpressIQ Limited",
-    "email": "Contact@XpressIQ.co.uk",
-    "subscribe_action": "#"
+    "members_url": "../commission.html",
+    "members_copy": "Members get every Fast Movers First report in full, with the evidence grades and sources, the week it is published."
   },
   "next": {
     "label": "Report 04 · November 2026",
@@ -65,7 +65,8 @@
           "duration": "1:47",
           "title": "Why 40% of AI agents will fail"
         }
-      }
+      },
+      "access": "free"
     },
     {
       "number": 2,
@@ -90,7 +91,8 @@
           "duration": "1:55",
           "title": "Everyday business workflows ready for AI"
         }
-      }
+      },
+      "access": "free"
     },
     {
       "number": 3,
@@ -123,7 +125,8 @@
           "note": "What is in use, what it can reach, what it costs, who signs for it. Unproven until a customer pays for it."
         }
       ],
-      "videos": {}
+      "videos": {},
+      "access": "free"
     }
   ]
 }

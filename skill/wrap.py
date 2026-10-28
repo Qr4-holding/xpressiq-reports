@@ -65,8 +65,8 @@ def draw_logo(draw, cfg, x, y, size, color_ink, color_accent, dot=True):
     return draw.textlength("XpressIQ", font=f)
 
 # ---------- cards ----------
-def draw_intro_card(cfg, W, H, title):
-    """One fully drawn intro card: used for every intro frame and as the poster."""
+def draw_intro_card(cfg, W, H, title, play=False):
+    """One fully drawn intro card: used for every intro frame and, with play=True, as the poster."""
     C = cfg["colors"]; bg = hexrgb(C["dark"]); ink = (255, 255, 255); lime = hexrgb(C["lime"])
     portrait = H > W
     S = W / 1280 if not portrait else W / 720
@@ -85,6 +85,18 @@ def draw_intro_card(cfg, W, H, title):
             d.text((int(W * 0.08), yy), ln, font=f, fill=ink); yy += lh
         fe = font(cfg, "display", int((18 if not portrait else 16) * S))
         d.text((int(W * 0.08), yy + int(18 * S)), cfg["series_label"].upper(), font=fe, fill=(159, 181, 173))
+    if play:
+        # lime play button, bottom-right, with a soft shadow: the cover thumb reads as a video at a glance
+        r = int((54 if not portrait else 46) * S)
+        cx, cy = W - int(W * 0.08) - r, H - int(H * (0.10 if not portrait else 0.08)) - r
+        sh = Image.new("RGBA", (W, H), (0, 0, 0, 0)); sd = ImageDraw.Draw(sh)
+        sd.ellipse((cx - r, cy - r + int(6 * S), cx + r, cy + r + int(6 * S)), fill=(0, 0, 0, 90))
+        from PIL import ImageFilter
+        sh = sh.filter(ImageFilter.GaussianBlur(int(10 * S)))
+        im.paste(sh, (0, 0), sh); d = ImageDraw.Draw(im)
+        d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=lime)
+        t = r * 0.52
+        d.polygon([(cx - t * 0.7, cy - t), (cx - t * 0.7, cy + t), (cx + t * 0.95, cy)], fill=bg)
     return im
 
 def render_intro_frames(cfg, W, H, fps, dur, title, outdir):
@@ -222,7 +234,7 @@ def cmd_wrap(a):
     concat([work / "intro.mp4", work / "body.mp4", work / "outro.mp4"], work / "joined.mp4")
     # poster = the intro card; embed it as cover art so players and galleries show it
     poster = out.with_suffix(".jpg")
-    draw_intro_card(cfg, W, H, a.title or "").save(poster, quality=90, optimize=True)
+    draw_intro_card(cfg, W, H, a.title or "", play=True).save(poster, quality=90, optimize=True)
     run(["ffmpeg", "-y", "-v", "error", "-i", str(work / "joined.mp4"), "-i", str(poster), "-map", "0", "-map", "1",
          "-c", "copy", "-disposition:v:1", "attached_pic", "-movflags", "+faststart", str(out)])
     print(f"wrote {out} + {poster.name}  ({W}x{H} @ {fps}fps; intro {intro_dur:.1f}s, body trimmed {trim:.2f}s, outro {outro_dur:.1f}s)")

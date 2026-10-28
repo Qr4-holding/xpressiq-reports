@@ -1,4 +1,6 @@
 site/build/
+site/node_modules/
+site/data/
 skill/build/
 skill/out/
 *.log
