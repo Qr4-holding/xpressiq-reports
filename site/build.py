@@ -55,10 +55,8 @@ def footer(depth=0):
 <p style="margin:0;color:#7f9690">© {y} {SITE['company']} · <a href="{b}privacy.html">Privacy</a></p>
 </div></footer>
 <script>
-document.querySelectorAll('.thumb').forEach(t=>{{const v=t.querySelector('video');if(!v)return;t.addEventListener('click',e=>{{if(e.target.closest('.shr,.shpop'))return;if(t.classList.contains('playing'))return;t.classList.add('playing');v.controls=true;v.play();}});v.addEventListener('ended',()=>{{t.classList.remove('playing');v.controls=false;}});
-const b=t.querySelector('.shr'),pop=t.querySelector('.shpop');if(!b)return;b.addEventListener('click',async e=>{{e.stopPropagation();const url=b.dataset.url,text=b.dataset.text;if(navigator.share){{try{{await navigator.share({{title:text,text:text,url:url}});return;}}catch(err){{if(err&&err.name==='AbortError')return;}}}}document.querySelectorAll('.shpop.open').forEach(p=>p!==pop&&p.classList.remove('open'));pop.classList.toggle('open');}});
-const c=pop.querySelector('.shcopy');c.addEventListener('click',async e=>{{e.stopPropagation();try{{await navigator.clipboard.writeText(b.dataset.url);c.lastChild.textContent='Copied';setTimeout(()=>{{c.lastChild.textContent='Copy link';pop.classList.remove('open');}},1200);}}catch(err){{prompt('Copy this link',b.dataset.url);}}}});}});
-document.addEventListener('click',e=>{{if(!e.target.closest('.shpop,.shr'))document.querySelectorAll('.shpop.open').forEach(p=>p.classList.remove('open'));}});
+document.querySelectorAll('.thumb').forEach(t=>{{const v=t.querySelector('video');if(!v)return;t.addEventListener('click',e=>{{if(e.target.closest('.rail'))return;if(t.classList.contains('playing'))return;t.classList.add('playing');v.controls=true;v.play();}});v.addEventListener('ended',()=>{{t.classList.remove('playing');v.controls=false;}});
+const b=t.querySelector('.ri-share');if(!b)return;b.addEventListener('click',async e=>{{e.stopPropagation();const url=b.dataset.url,text=b.dataset.text;if(navigator.share){{try{{await navigator.share({{title:text,text:text,url:url}});return;}}catch(err){{if(err&&err.name==='AbortError')return;}}}}try{{await navigator.clipboard.writeText(url);const l=b.querySelector('span');l.textContent='Copied';setTimeout(()=>l.textContent='Share',1500);}}catch(err){{prompt('Copy this link',url);}}}});}});
 document.querySelectorAll('form[data-api]').forEach(f=>{{f.addEventListener('submit',async e=>{{e.preventDefault();const btn=f.querySelector('button[type=submit]');const msg=f.querySelector('.formmsg');const data=Object.fromEntries(new FormData(f).entries());btn.disabled=true;try{{const r=await fetch(f.dataset.api,{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(data)}});const j=await r.json();if(j.ok){{f.querySelectorAll('input,textarea,select').forEach(i=>i.disabled=true);btn.textContent=f.dataset.done||'Done';msg.textContent=f.dataset.thanks||'Thank you.';}}else{{msg.textContent=j.error||'Something went wrong. Please try again.';btn.disabled=false;}}}}catch(err){{msg.textContent='Could not send just now. Please try again in a moment.';btn.disabled=false;}}}});}});
 </script></body></html>"""
 
@@ -82,16 +80,18 @@ ICONS = {
 }
 
 def share_overlay(url, text):
-    """Small share icon on a video thumb; opens the phone share sheet, or a compact popover on desktop."""
+    """YouTube-style action rail down the right edge of a video: Share (system share sheet, or copy link),
+    WhatsApp, X, LinkedIn. Always visible, including during playback."""
     import urllib.parse as u
     q = u.quote(url, safe=""); t = u.quote(text, safe="")
-    return (f'<button type="button" class="shr" aria-label="Share this video" data-url="{esc(url)}" data-text="{esc(text)}">{ICONS["share"]}</button>'
-            f'<div class="shpop" role="menu">'
-            f'<a href="https://wa.me/?text={t}%20{q}" target="_blank" rel="noopener">{ICONS["wa"]}WhatsApp</a>'
-            f'<a href="https://www.linkedin.com/sharing/share-offsite/?url={q}" target="_blank" rel="noopener">{ICONS["li"]}LinkedIn</a>'
-            f'<a href="https://x.com/intent/post?url={q}&text={t}" target="_blank" rel="noopener">{ICONS["x"]}X</a>'
-            f'<a href="mailto:?subject={t}&body={t}%0A%0A{q}">{ICONS["em"]}Email</a>'
-            f'<button type="button" class="shcopy">{ICONS["ln"]}Copy link</button></div>')
+    def item(tag, inner, cls="", attrs=""):
+        return f'<{tag} class="ri {cls}" {attrs}>{inner}</{tag}>'
+    return ('<div class="rail" role="group" aria-label="Share this video">'
+            + item("button", f'{ICONS["share"]}<span>Share</span>', "ri-share", f'type="button" data-url="{esc(url)}" data-text="{esc(text)}" aria-label="Share"')
+            + item("a", f'{ICONS["wa"]}<span>WhatsApp</span>', "", f'href="https://wa.me/?text={t}%20{q}" target="_blank" rel="noopener" aria-label="Share on WhatsApp"')
+            + item("a", f'{ICONS["x"]}<span>X</span>', "", f'href="https://x.com/intent/post?url={q}&text={t}" target="_blank" rel="noopener" aria-label="Share on X"')
+            + item("a", f'{ICONS["li"]}<span>LinkedIn</span>', "", f'href="https://www.linkedin.com/sharing/share-offsite/?url={q}" target="_blank" rel="noopener" aria-label="Share on LinkedIn"')
+            + '</div>')
 
 def share(url, text):
     """Share row: native share sheet on phones, then WhatsApp, LinkedIn, X, email, copy link."""
