@@ -13,10 +13,24 @@ SITE = MANIFEST["site"]
 
 def esc(s): return html.escape(s, quote=True)
 
-def head(title, desc, depth=0):
+BASE_URL = MANIFEST["site"].get("base_url", "https://www.xpressiq.co.uk")
+
+def v(path):
+    """Append a short content hash so browsers fetch new videos/posters after a re-wrap."""
+    import hashlib
+    f = ROOT / path
+    if not f.exists(): return path
+    st = f.stat(); h = hashlib.md5(f"{st.st_size}-{int(st.st_mtime)}".encode()).hexdigest()[:8]
+    return f"{path}?v={h}"
+
+def head(title, desc, depth=0, url="", image="", video=""):
     base = "../" * depth
+    og = f'<meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:site_name" content="XpressIQ"><meta property="og:type" content="{'video.other' if video else 'website'}">'
+    if url: og += f'<meta property="og:url" content="{esc(url)}">'
+    if image: og += f'<meta property="og:image" content="{esc(image)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="{esc(image)}">'
+    if video: og += f'<meta property="og:video" content="{esc(video)}"><meta property="og:video:type" content="video/mp4">'
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{esc(title)}</title><meta name="description" content="{esc(desc)}">
+<title>{esc(title)}</title><meta name="description" content="{esc(desc)}">{og}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{base}assets/site.css"></head><body>"""
@@ -42,6 +56,7 @@ def footer(depth=0):
 </div></footer>
 <script>
 document.querySelectorAll('.thumb').forEach(t=>{{const v=t.querySelector('video');if(!v)return;t.addEventListener('click',e=>{{if(t.classList.contains('playing'))return;t.classList.add('playing');v.controls=true;v.play();}});v.addEventListener('ended',()=>{{t.classList.remove('playing');v.controls=false;}});}});
+document.querySelectorAll('.share').forEach(sb=>{{const url=sb.dataset.url,text=sb.dataset.text;const n=sb.querySelector('.sh-native');if(navigator.share&&n){{n.hidden=false;n.addEventListener('click',()=>navigator.share({{title:text,text:text,url:url}}).catch(()=>{{}}));}}const c=sb.querySelector('.sh-copy');c&&c.addEventListener('click',async()=>{{try{{await navigator.clipboard.writeText(url);const o=c.innerHTML;c.innerHTML='Copied';setTimeout(()=>c.innerHTML=o,1800);}}catch(e){{prompt('Copy this link',url);}}}});}});
 document.querySelectorAll('form[data-api]').forEach(f=>{{f.addEventListener('submit',async e=>{{e.preventDefault();const btn=f.querySelector('button[type=submit]');const msg=f.querySelector('.formmsg');const data=Object.fromEntries(new FormData(f).entries());btn.disabled=true;try{{const r=await fetch(f.dataset.api,{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(data)}});const j=await r.json();if(j.ok){{f.querySelectorAll('input,textarea,select').forEach(i=>i.disabled=true);btn.textContent=f.dataset.done||'Done';msg.textContent=f.dataset.thanks||'Thank you.';}}else{{msg.textContent=j.error||'Something went wrong. Please try again.';btn.disabled=false;}}}}catch(err){{msg.textContent='Could not send just now. Please try again in a moment.';btn.disabled=false;}}}});}});
 </script></body></html>"""
 
@@ -54,18 +69,37 @@ def optin(depth=0, report_slug="", compact=False):
 <form data-api="/api/subscribe" data-done="Subscribed" data-thanks="You're on the list. The next report comes to your inbox." method="post" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">{hid}<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true"><label for="email-{report_slug or 'home'}" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Email address</label><input id="email-{report_slug or 'home'}" name="email" type="email" placeholder="you@company.co.uk" required style="flex:1 1 220px;min-height:48px;padding:0 16px;border-radius:6px;border:1px solid #4e6b67;background:#0b1f22;color:#fff"><button type="submit" class="btn btn-lime">Send me the report</button><p class="formmsg" role="status" style="flex-basis:100%;margin:0;font-size:14px;color:#bdf453"></p></form>
 <p style="font-size:12px;color:#8fa8a0">For founders, owners, investors and advisers who move on opportunity.</p></div>"""
 
+def share(url, text):
+    """Share row: native share sheet on phones, then WhatsApp, LinkedIn, X, email, copy link."""
+    import urllib.parse as u
+    q = u.quote(url, safe=""); t = u.quote(text, safe="")
+    ic = lambda d: f'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="{d}"/></svg>'
+    wa = ic("M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6.3-.5c.1-.2 0-.4 0-.5L9 6.7c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.5-.2M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2m0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2")
+    li = ic("M20.4 2H3.6A1.6 1.6 0 0 0 2 3.6v16.8A1.6 1.6 0 0 0 3.6 22h16.8a1.6 1.6 0 0 0 1.6-1.6V3.6A1.6 1.6 0 0 0 20.4 2M8 19H5V9.5h3M6.5 8.2a1.7 1.7 0 1 1 0-3.5 1.7 1.7 0 0 1 0 3.5M19 19h-3v-4.6c0-1.1 0-2.5-1.5-2.5s-1.8 1.2-1.8 2.4V19h-3V9.5h2.9v1.3h.1a3.1 3.1 0 0 1 2.8-1.5c3 0 3.5 2 3.5 4.5")
+    x = ic("M17.5 3h3.1l-6.8 7.7L21.8 21h-6.2l-4.9-6.4L5.1 21H2l7.3-8.3L1.7 3h6.4l4.4 5.8M16.4 19.2h1.7L7 4.7H5.1")
+    em = ic("M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1m9 7.3L20 7H4m0 11h16V8.8l-8 5.5-8-5.5")
+    ln = ic("M10.6 13.4a1 1 0 0 1 0-1.4l3.4-3.4a3 3 0 0 1 4.2 4.2l-1.5 1.5-1.4-1.4 1.5-1.5a1 1 0 0 0-1.4-1.4l-3.4 3.4a1 1 0 0 0 1.4 1.4l.7-.7 1.4 1.4-.7.7a3 3 0 0 1-4.2-4.2m2.8-2.8a1 1 0 0 1 0 1.4L10 15.4a3 3 0 0 1-4.2-4.2l1.5-1.5 1.4 1.4-1.5 1.5a1 1 0 0 0 1.4 1.4l3.4-3.4")
+    sh = ic("M18 16a3 3 0 0 0-2.4 1.2l-7-4.1a3 3 0 0 0 0-2.2l7-4.1A3 3 0 1 0 15 5c0 .3 0 .6.1.9l-7 4.1a3 3 0 1 0 0 4l7 4.1A3 3 0 1 0 18 16")
+    return f"""<div class="share" data-url="{esc(url)}" data-text="{esc(text)}"><span class="eyebrow">Share</span>
+<button type="button" class="sh sh-native" hidden>{sh}Share…</button>
+<a class="sh" href="https://wa.me/?text={t}%20{q}" target="_blank" rel="noopener">{wa}WhatsApp</a>
+<a class="sh" href="https://www.linkedin.com/sharing/share-offsite/?url={q}" target="_blank" rel="noopener">{li}LinkedIn</a>
+<a class="sh" href="https://x.com/intent/post?url={q}&text={t}" target="_blank" rel="noopener">{x}X</a>
+<a class="sh" href="mailto:?subject={t}&body={t}%0A%0A{q}">{em}Email</a>
+<button type="button" class="sh sh-copy">{ln}Copy link</button></div>"""
+
 PLAY = '<span class="play" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="#10282b"><path d="M7 4.5v15l13-7.5z"/></svg></span>'
 
 def thumb(r, kind, depth=0, big_title=None):
     """kind: '16x9' or '9x16'. Returns a bare branded video thumb or a placeholder."""
     b = "../" * depth
-    v = r["videos"].get(kind)
+    vid = r["videos"].get(kind)
     ratio = "r169" if kind == "16x9" else "r916"
     brand = '<span class="brand" aria-hidden="true">Xpress<i>IQ</i></span>'
-    if v:
-        return (f'<div class="thumb {ratio}" tabindex="0" role="button" aria-label="Play: {esc(v["title"])}">'
-                f'<video preload="metadata" playsinline poster="{b}{v["poster"]}" src="{b}{v["file"]}"></video>'
-                f'{brand}{PLAY}<span class="dur">{v["duration"]}</span></div>')
+    if vid:
+        return (f'<div class="thumb {ratio}" tabindex="0" role="button" aria-label="Play: {esc(vid["title"])}">'
+                f'<video preload="metadata" playsinline poster="{b}{v(vid["poster"])}" src="{b}{v(vid["file"])}"></video>'
+                f'{brand}{PLAY}<span class="dur">{vid["duration"]}</span></div>')
     t = big_title or r["title"]
     return (f'<div class="thumb {ratio}" aria-label="{esc(t)} – video coming">'
             f'<div class="ph"><strong>{esc(t)}</strong><span>[VIDEO COMING]</span></div>{brand}{PLAY}</div>')
@@ -93,7 +127,7 @@ def build_index():
     radar_items = [f'<div style="display:flex;justify-content:space-between;gap:16px;padding:17px 0;border-bottom:1px solid #d3dfd2;align-items:center"><div style="display:flex;gap:16px;align-items:baseline"><span style="color:#80a850;font-size:12px;font-weight:700;font-family:Manrope,sans-serif">{i+1:02d}</span><strong style="font-size:16px">{esc(x)}</strong></div><span class="tag tag-hyp">Hypothesis</span></div>' for i,x in enumerate(MANIFEST["radar"])]
     radar_html = f'<div class="grid2" style="gap:0 48px"><div style="border-top:1px solid #d3dfd2">{"".join(radar_items[:half])}</div><div style="border-top:1px solid #d3dfd2">{"".join(radar_items[half:])}</div></div>'
     nx = MANIFEST["next"]
-    out = head(f"XpressIQ — Fast Movers First. {L['title']}", "Weekly intelligence reports for people who move on opportunity. Every claim traced, every finding graded, every report ends with a next move.")
+    out = head(f"XpressIQ — Fast Movers First. {L['title']}", "Weekly intelligence reports for people who move on opportunity. Every claim traced, every finding graded, every report ends with a next move.", url=BASE_URL + "/", image=(f"{BASE_URL}/{L['videos']['16x9']['poster']}" if L['videos'].get('16x9') else ""))
     out += nav("home")
     out += f"""<main>
 <section class="wrap hero" id="top">
@@ -148,7 +182,8 @@ def build_gallery():
         items.append(f"""<article>{thumb(r,'9x16')}
 <div class="meta"><span class="eyebrow">Report {r['number']:02d} · {esc(r['date_label'])}</span>{'<span class="tag tag-next">Ready</span>' if v else '<span class="tag tag-soon">Coming soon</span>'}</div>
 <h3 class="h">{esc(v['title'] if v else r['title'])}</h3><p>{esc(r['summary'])}</p>
-<a class="link" href="reports/{r['slug']}.html">Read the full Fast Movers First report →</a></article>""")
+<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center"><a class="link" href="reports/{r['slug']}.html">Read the full report →</a>{('<a class="link" href="shorts/' + r['slug'] + '.html">Open the short →</a>') if v else ''}</div>
+{share(f"{BASE_URL}/shorts/{r['slug']}", v['title']) if v else ''}</article>""")
     out = head("XpressIQ Shorts — the report in a minute or two", "Portrait video summaries of every Fast Movers First report.")
     out += nav("gallery")
     out += f"""<main><section class="section wrap"><div class="sec-head"><div><div class="eyebrow"><span class="dot"></span>Shorts</div><h2 class="h">The report, in a minute or two.</h2></div><p>Portrait summaries of each Fast Movers First report, for the people who move before they have read the full thing. Each one links to its report and sources.</p></div>
@@ -210,13 +245,15 @@ def build_report(i, r):
         body = "".join(parts[:2]) + optin(1, r['slug'], compact=True) + "".join(parts[2:])
     grades = "".join(f'<div class="grade" style="border-color:#dce4dc"><span class="tag {tag_for(g["grade"])}">{esc(g["grade"])}</span><div><strong style="font-family:Manrope,sans-serif;font-size:16px;font-weight:700;display:block;margin-bottom:4px">{esc(g["claim"])}</strong><span style="color:#53666a;font-size:14px;line-height:1.5">{esc(g["note"])}</span></div></div>' for g in r.get("grades",[]))
     pager = f'<div class="pager"><span>{("<a href=\"" + prev_r["slug"] + ".html\">← Previous: " + esc(prev_r["title"]) + "</a>") if prev_r else ""}</span><span>{("<a href=\"" + next_r["slug"] + ".html\">Next: " + esc(next_r["title"]) + " →</a>") if next_r else "<a href=\"../index.html#subscribe\">Get next week's report →</a>"}</span></div>'
-    out = head(f"{r['title']} — XpressIQ Fast Movers First report {r['number']:02d}", r["summary"], depth=1)
+    url = f"{BASE_URL}/reports/{r['slug']}"
+    v16 = r["videos"].get("16x9")
+    out = head(f"{r['title']} — XpressIQ Fast Movers First report {r['number']:02d}", r["summary"], depth=1, url=url, image=(f"{BASE_URL}/{v16['poster']}" if v16 else ""), video=(f"{BASE_URL}/{v16['file']}" if v16 else ""))
     out += nav("reports", depth=1)
     out += f"""<main><section class="section wrap"><article class="report">
 <div class="eyebrow"><span class="dot"></span>Fast Movers First · Report {r['number']:02d} · {esc(r['date_label'])}</div>
 <h1 class="h">{esc(r['title'])}</h1>
 <p class="byline">{esc(r['standfirst'])}</p>
-<div style="margin:36px 0 44px">{thumb(r,'16x9',1)}<div class="meta"><span class="eyebrow">Full briefing · {r['videos'].get('16x9',{}).get('duration','coming')}</span><a href="../gallery.html" style="font-size:14px;font-weight:700;text-decoration:none;border-bottom:2px solid #9fb59f">The short version is in Shorts →</a></div></div>
+<div style="margin:36px 0 44px">{thumb(r,'16x9',1)}<div class="meta"><span class="eyebrow">Full briefing · {r['videos'].get('16x9',{}).get('duration','coming')}</span><a href="../gallery.html" style="font-size:14px;font-weight:700;text-decoration:none;border-bottom:2px solid #9fb59f">The short version is in Shorts →</a></div>{share(url, r['title'])}</div>
 {('<div class="eyebrow" style="margin-bottom:6px">Evidence grades</div><div class="grades" style="border-color:#dce4dc">' + grades + '</div>') if grades else ''}
 {('<blockquote><p><strong>The next move. </strong>' + esc(r['next_move']) + '</p></blockquote>') if r.get('next_move') else ''}
 {body}
@@ -225,6 +262,25 @@ def build_report(i, r):
 </article></section></main>"""
     out += footer(depth=1)
     (ROOT / "reports" / f"{r['slug']}.html").write_text(out)
+
+def build_short(r):
+    vid = r["videos"].get("9x16")
+    if not vid: return
+    url = f"{BASE_URL}/shorts/{r['slug']}"
+    out = head(f"{vid['title']} — XpressIQ short", r["summary"], depth=1, url=url, image=f"{BASE_URL}/{vid['poster']}", video=f"{BASE_URL}/{vid['file']}")
+    out += nav("gallery", depth=1)
+    out += f"""<main><section class="section wrap"><div class="grid2" style="align-items:start;max-width:980px;margin:0 auto">
+<div style="max-width:420px;margin:0 auto;width:100%">{thumb(r,'9x16',1)}</div>
+<div><div class="eyebrow"><span class="dot"></span>Fast Movers First · Report {r['number']:02d} · {esc(r['date_label'])} · {vid['duration']}</div>
+<h1 class="h" style="font-size:40px;margin:14px 0 14px">{esc(vid['title'])}</h1>
+<p style="font-size:17px;line-height:1.65;color:#44585b">{esc(r['summary'])}</p>
+<a class="btn btn-dark" href="../reports/{r['slug']}.html" style="margin-top:8px">Read the full report and sources</a>
+<div style="margin-top:28px">{share(url, vid['title'])}</div>
+<div style="margin-top:36px">{optin(1, r['slug'], compact=True)}</div>
+</div></div></section></main>"""
+    out += footer(depth=1)
+    (ROOT / "shorts").mkdir(exist_ok=True)
+    (ROOT / "shorts" / f"{r['slug']}.html").write_text(out)
 
 def build_privacy():
     out = head("Privacy — XpressIQ", "How XpressIQ handles the information you give it.")
@@ -237,5 +293,5 @@ def build_privacy():
 
 if __name__ == "__main__":
     build_index(); build_gallery(); build_commission(); build_privacy()
-    for i, r in enumerate(REPORTS): build_report(i, r)
+    for i, r in enumerate(REPORTS): build_report(i, r); build_short(r)
     print("built:", [p.name for p in ROOT.glob("*.html")], [p.name for p in (ROOT/"reports").glob("*.html")])

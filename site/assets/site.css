@@ -148,3 +148,8 @@ input,textarea,select{font-family:'DM Sans',sans-serif;font-size:15px}
 .gate{background:#fff;border:1px solid #c5dca3;border-radius:10px;padding:32px;margin:36px 0;text-align:left}
 .gate p{color:#44585b;font-size:16px;line-height:1.6}
 .report .optin{margin-top:32px}
+.share{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
+.share .eyebrow{margin-right:6px}
+.sh{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 12px;border-radius:6px;border:1px solid #c9d5c8;background:#fff;color:var(--ink);font:600 13px 'DM Sans',sans-serif;text-decoration:none;cursor:pointer}
+.sh:hover{border-color:var(--ink);color:var(--ink)}
+.sh svg{color:var(--accent-dk)}
