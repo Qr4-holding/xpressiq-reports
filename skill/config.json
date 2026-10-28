@@ -37,5 +37,12 @@
     "trim_end_seconds": 3.0,
     "cut_before_card_seconds": 0.15,
     "note": "NotebookLM puts a 3 s end card on every export; wrap.py auto-detects it and cuts just before, falling back to trim_end_seconds."
+  },
+  "encode": {
+    "crf": 28,
+    "preset": "slow",
+    "audio_kbps": 96,
+    "audio_channels": 1,
+    "note": "Tested Oct 2026: CRF 28 is visually identical to CRF 18 on NotebookLM slides; short 6.9MB -> 3.0MB, 9-min briefing ~23MB -> ~12MB. Lower crf = bigger file."
   }
 }

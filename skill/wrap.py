@@ -18,6 +18,17 @@ from PIL import Image, ImageDraw, ImageFont
 
 HERE = pathlib.Path(__file__).parent
 
+# encode settings, overridden from config.json "encode" in each command (one encode per video, sized for sharing)
+ENC = {"crf": 28, "preset": "slow", "audio_kbps": 96, "audio_channels": 1}
+
+def enc_args():
+    ch = str(ENC["audio_channels"])
+    return ["-c:v", "libx264", "-preset", ENC["preset"], "-pix_fmt", "yuv420p", "-profile:v", "high", "-crf", str(ENC["crf"]),
+            "-c:a", "aac", "-b:a", f'{ENC["audio_kbps"]}k', "-ar", "44100", "-ac", ch]
+
+def layout():
+    return "mono" if int(ENC["audio_channels"]) == 1 else "stereo"
+
 # ---------- helpers ----------
 def run(cmd, **kw):
     r = subprocess.run(cmd, capture_output=True, text=True, **kw)
@@ -186,13 +197,12 @@ def frames_to_clip(frames_glob, fps, W, H, audio_tracks, dur, out):
     if audio_tracks:
         parts = []; names = []
         for k, (_, st) in enumerate(audio_tracks):
-            parts.append(f"[{k+1}:a]aformat=sample_rates=44100:channel_layouts=stereo,adelay={int(st*1000)}|{int(st*1000)}[a{k}]"); names.append(f"[a{k}]")
+            parts.append(f"[{k+1}:a]aformat=sample_rates=44100:channel_layouts={layout()},adelay={int(st*1000)}|{int(st*1000)}[a{k}]"); names.append(f"[a{k}]")
         parts.append("".join(names) + f"amix=inputs={len(names)}:normalize=0,apad[aout]")
         cmd += ["-filter_complex", ";".join(parts), "-map", "0:v", "-map", "[aout]"]
     else:
-        cmd += ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-map", "0:v", "-map", "1:a"]
-    cmd += ["-t", f"{dur:.3f}", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-profile:v", "high", "-crf", "18",
-            "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-ac", "2", "-s", f"{W}x{H}", str(out)]
+        cmd += ["-f", "lavfi", "-i", f"anullsrc=r=44100:cl={layout()}", "-map", "0:v", "-map", "1:a"]
+    cmd += ["-t", f"{dur:.3f}"] + enc_args() + ["-s", f"{W}x{H}", str(out)]
     run(cmd)
 
 def detect_end_card(src, dur, window=8.0, step=0.25):
@@ -223,7 +233,7 @@ def normalise(src, W, H, fps, out, trim_end=0.0):
     trim_end: seconds to drop from the end (the NotebookLM end card)."""
     _, _, _, dur = probe(src)
     run(["ffmpeg", "-y", "-v", "error", "-i", str(src), "-t", f"{max(1.0, dur - trim_end):.3f}", "-vf", f"scale={W}:{H}:force_original_aspect_ratio=decrease,pad={W}:{H}:(ow-iw)/2:(oh-ih)/2,fps={fps}",
-         "-c:v", "libx264", "-pix_fmt", "yuv420p", "-profile:v", "high", "-crf", "18", "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-ac", "2", str(out)])
+         ] + enc_args() + [str(out)])
 
 def concat(parts, out):
     lst = out.parent / (out.stem + "_concat.txt")
@@ -233,7 +243,7 @@ def concat(parts, out):
 
 # ---------- commands ----------
 def cmd_wrap(a):
-    cfg = json.loads(pathlib.Path(a.config).read_text())
+    cfg = json.loads(pathlib.Path(a.config).read_text()); ENC.update(cfg.get("encode", {}))
     W, H, fps, _ = probe(a.video); fps = 30 if fps > 29 else 24 if fps < 26 else 25
     work = pathlib.Path(tempfile.mkdtemp(prefix="xiqwrap_"))
     # --- intro timing: brand VO at 0.3s, title VO after it
@@ -265,7 +275,7 @@ def cmd_wrap(a):
 
 def cmd_cards(a):
     """Render stand-alone intro/outro clips (no body) for review."""
-    cfg = json.loads(pathlib.Path(a.config).read_text())
+    cfg = json.loads(pathlib.Path(a.config).read_text()); ENC.update(cfg.get("encode", {}))
     for (W, H) in [(1280, 720), (720, 1280)]:
         work = pathlib.Path(tempfile.mkdtemp(prefix="xiqcards_")); fps = 30
         outro_vo = HERE / cfg["voice"]["outro_file"]

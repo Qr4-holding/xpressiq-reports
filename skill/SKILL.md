@@ -34,7 +34,8 @@ python3 wrap.py wrap --config config.json \
 
 `wrap.py` reads the source size and frame rate, renders the intro and outro frames with Pillow at that size, lays the voiceover under them, re-encodes the body to matching settings and concatenates intro + body + outro (H.264, AAC stereo 44.1 kHz, faststart). An 8-minute 720p file takes a few minutes; run it in the background.
 
-Three things it does on its own, every time:
+Four things it does on its own, every time:
+- **Compresses for sharing.** One encode at CRF 28, AAC 96k mono (`encode` in `config.json`). On NotebookLM slides this looks the same as master quality at well under half the size (a short is ~3MB, a 9-minute briefing ~12MB). No HandBrake step needed; upload the NotebookLM exports as they come.
 - **Cuts the NotebookLM end card.** It scans the last 8 s of the source for the flat "Gemini Notebook" card and trims just before it, so the XpressIQ outro covers it. If it cannot find one it trims `body.trim_end_seconds` (3.0 s) from `config.json`. Override with `--trim-end <seconds>` when a source has no card (pass `0`).
 - **Makes the first frame the thumbnail.** The intro card is fully drawn from frame 0 (logo, FAST MOVERS FIRST, the title, "XpressIQ · Fast Movers First report summary"), so a player that shows the first frame shows the branded card, never black.
 - **Writes a poster and embeds it.** `out/<slug>-16x9.jpg` (and `-9x16.jpg`) is the same card as a JPEG with a lime play button bottom-right; it is also embedded in the mp4 as cover art. Use that JPEG as the site poster and as the upload thumbnail on YouTube, LinkedIn or TikTok.
