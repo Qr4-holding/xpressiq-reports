@@ -73,13 +73,13 @@ def draw_intro_card(cfg, W, H, title, play=False):
     logo_size = int((120 if not portrait else 84) * S)
     im = Image.new("RGB", (W, H), bg); d = ImageDraw.Draw(im)
     rule_y = int(H * (0.37 if not portrait else 0.33))
-    d.rectangle((int(W * 0.08), rule_y, int(W * 0.92), rule_y + max(2, int(3 * S))), fill=lime)
+    d.rectangle((int(W * 0.08), rule_y, int(W * (0.86 if not portrait else 0.92)), rule_y + max(2, int(3 * S))), fill=lime)
     draw_logo(d, cfg, int(W * 0.08), rule_y - int(logo_size * 1.25), logo_size, ink, lime)
     f = font(cfg, "display", int((28 if not portrait else 24) * S))
     d.text((int(W * 0.08), rule_y + int(26 * S)), cfg["strapline"], font=f, fill=lime)
     if title:
         f = font(cfg, "display", int((56 if not portrait else 44) * S))
-        lines = wrap_text(d, title, f, int(W * 0.84))
+        lines = wrap_text(d, title, f, int(W * (0.78 if not portrait else 0.84)))
         yy = rule_y + int((90 if not portrait else 84) * S); lh = int(f.size * 1.12)
         for ln in lines:
             d.text((int(W * 0.08), yy), ln, font=f, fill=ink); yy += lh
@@ -88,7 +88,7 @@ def draw_intro_card(cfg, W, H, title, play=False):
     if play:
         # lime play button, bottom-right, with a soft shadow: the cover thumb reads as a video at a glance
         r = int((54 if not portrait else 46) * S)
-        cx = (W - int(W * 0.08) - r) if not portrait else (int(W * 0.08) + r); cy = H - int(H * (0.10 if not portrait else 0.08)) - r
+        cx = int(W * 0.08) + r; cy = H - int(H * (0.10 if not portrait else 0.08)) - r
         sh = Image.new("RGBA", (W, H), (0, 0, 0, 0)); sd = ImageDraw.Draw(sh)
         sd.ellipse((cx - r, cy - r + int(6 * S), cx + r, cy + r + int(6 * S)), fill=(0, 0, 0, 90))
         from PIL import ImageFilter
@@ -107,7 +107,7 @@ def render_intro_frames(cfg, W, H, fps, dur, title, outdir):
     S = W / 1280 if not portrait else W / 720
     logo_size = int((120 if not portrait else 84) * S)
     rule_y = int(H * (0.37 if not portrait else 0.33)); rh = max(2, int(3 * S))
-    x0, x1 = int(W * 0.08), int(W * 0.92)
+    x0, x1 = int(W * 0.08), int(W * (0.86 if not portrait else 0.92))
     card = draw_intro_card(cfg, W, H, title)
     # dot position (mirrors draw_logo)
     fL = font(cfg, "display", logo_size); d0 = ImageDraw.Draw(card)
