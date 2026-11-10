@@ -1,0 +1,44 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta property="og:type" content="website"><meta property="og:site_name" content="XpressIQ"><meta property="og:title" content="Demo room — XpressIQ"><meta property="og:description" content="The XpressIQ demo room is private."><meta name="viewport" content="width=device-width,initial-scale=1">
+<script>document.documentElement.className+=" js"</script><title>Demo room — XpressIQ</title><meta name="description" content="The XpressIQ demo room is private.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css?v=12b302b7"></head><body><header class="nav"><div class="wrap">
+<a class="logo" href="/index.html"><span class="h">Xpress<i>IQ</i><b></b></span><small>Fast Movers First</small></a>
+<nav class="navlinks" aria-label="Main navigation"><a href="/index.html#builds">Builds</a><a href="/index.html#reports">Reports</a><a href="/gallery.html">Shorts</a><a href="/commission.html">Commission a report</a><a class="lockl on" href="/demos"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:13px;height:13px"><path d="M17 9V7A5 5 0 0 0 7 7v2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-8 0V7a3 3 0 0 1 6 0v2z"/></svg>Demo room</a></nav>
+<a class="btn btn-dark navcta" href="/index.html#subscribe">Get the weekly report</a>
+</div></header><main class="room"><section class="section wrap"><div class="grid2" style="align-items:start">
+<div class="glowb lockbox"><div class="eyebrow">Demo room · private</div><h1 class="h" style="font-size:40px">Enter the password.</h1><p>The working demos are behind this door. If you have been sent a password, enter it here.</p>
+<form method="post" action="/demos/login" style="display:flex;flex-direction:column;gap:12px"><input type="hidden" name="next" id="next"><div class="field"><label for="pw">Password</label><input id="pw" name="password" type="password" required autocomplete="current-password" autofocus></div><p class="err" role="alert"><!--ERR--></p><button class="btn btn-lime" type="submit">Open the demo room</button></form></div>
+<div class="glowb lockbox"><div class="eyebrow">No password yet?</div><h2 class="h" style="font-size:28px">Request access.</h2><p>Say which build you want to see. A password comes back by email.</p><form data-api="/api/enquiry" data-done="Sent" data-thanks="Received. You will hear back within two working days." method="post" style="display:flex;flex-direction:column;gap:12px">
+<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+<div class="field"><label for="le-n">Your name</label><input id="le-n" name="name" required></div>
+<div class="field"><label for="le-e">Email address</label><input id="le-e" name="email" type="email" required></div>
+<div class="field"><label for="le-p">Which build</label><select id="le-p" name="product"><option>Succession Record</option><option>Jamaica Title Check</option><option>DoneItPic</option><option>DroneReport</option><option>CleanUpPic</option><option>Sale Now On</option><option>Saw This And Thought Of You</option><option>More than one</option></select></div>
+<div class="field"><label for="le-i">What you would like</label><select id="le-i" name="interest"><option>Access to the working demo</option><option>A subscription</option><option>A white-label version</option><option>Something else</option></select></div>
+<button type="submit" class="btn btn-lime">Send request</button><p class="formmsg" role="status" style="font-size:14px;color:#bdf453;margin:0"></p></form></div>
+</div></section></main><script>document.getElementById('next').value=location.hash.slice(1);</script><footer class="footer"><div class="wrap">
+<div><a class="logo" href="/index.html"><span class="h">Xpress<i style="color:#bdf453">IQ</i></span><small>Fast Movers First</small></a><p style="margin:8px 0 0">Intelligence delivered before you knew you needed it.</p></div>
+<div style="display:flex;gap:24px;flex-wrap:wrap"><a href="/index.html#builds">Builds</a><a href="/index.html#reports">Reports</a><a href="/gallery.html">Shorts</a><a href="/demos">Demo room</a><a href="/commission.html">Commission a report</a><a href="/commission.html#contact">Contact</a></div>
+<p style="margin:0;color:#7f9690">© 2026 XpressIQ Limited · <a href="/privacy.html">Privacy</a></p>
+</div></footer>
+<script>
+document.querySelectorAll('.thumb').forEach(t=>{const v=t.querySelector('video');if(!v)return;t.addEventListener('click',e=>{if(e.target.closest('.rail'))return;if(t.classList.contains('playing'))return;t.classList.add('playing');v.controls=true;v.play();});v.addEventListener('ended',()=>{t.classList.remove('playing');v.controls=false;});
+const b=t.querySelector('.ri-share');if(!b)return;const lab=b.querySelector('span');let ready=null,busy=false;
+const fname=()=> (b.dataset.text||'XpressIQ').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,60)+'.mp4';
+const linkShare=async()=>{const url=b.dataset.url,text=b.dataset.text;if(navigator.share){try{await navigator.share({title:text,text:text,url:url});}catch(e){}return;}try{await navigator.clipboard.writeText(url);lab.textContent='Copied';setTimeout(()=>lab.textContent='Share',1500);}catch(e){prompt('Copy this link',url);}};
+const fileShare=async f=>{await navigator.share({files:[f],title:b.dataset.text,text:b.dataset.text});};
+b.addEventListener('click',async e=>{e.stopPropagation();const fu=b.dataset.file;
+ if(!fu||!navigator.canShare||!navigator.canShare({files:[new File([new Blob()],'x.mp4',{type:'video/mp4'})]})){return linkShare();}
+ if(ready){try{await fileShare(ready);}catch(err){if(err.name!=='AbortError')linkShare();}lab.textContent='Share';return;}
+ if(busy)return;busy=true;lab.textContent='Preparing';
+ try{const r=await fetch(fu);const blob=await r.blob();ready=new File([blob],fname(),{type:'video/mp4'});busy=false;
+   try{await fileShare(ready);lab.textContent='Share';}catch(err){if(err.name==='NotAllowedError'){lab.textContent='Tap to send';}else if(err.name==='AbortError'){lab.textContent='Share';}else{lab.textContent='Share';linkShare();}}
+ }catch(err){busy=false;lab.textContent='Share';linkShare();}
+});});
+document.querySelectorAll('form[data-api]').forEach(f=>{f.addEventListener('submit',async e=>{e.preventDefault();const btn=f.querySelector('button[type=submit]');const msg=f.querySelector('.formmsg');const data=Object.fromEntries(new FormData(f).entries());btn.disabled=true;try{const r=await fetch(f.dataset.api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const j=await r.json();if(j.ok){f.querySelectorAll('input,textarea,select').forEach(i=>i.disabled=true);btn.textContent=f.dataset.done||'Done';msg.textContent=f.dataset.thanks||'Thank you.';}else{msg.textContent=j.error||'Something went wrong. Please try again.';btn.disabled=false;}}catch(err){msg.textContent='Could not send just now. Please try again in a moment.';btn.disabled=false;}});});
+(function(){var els=document.querySelectorAll('.rv');if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px',threshold:.08});els.forEach(function(e){io.observe(e)});
+setTimeout(function(){els.forEach(function(e){var r=e.getBoundingClientRect();if(r.top<innerHeight)e.classList.add('in')})},1200);
+if(matchMedia('(hover:hover) and (prefers-reduced-motion:no-preference)').matches)document.querySelectorAll('.pcard').forEach(function(c){c.addEventListener('pointermove',function(ev){var r=c.getBoundingClientRect(),x=(ev.clientX-r.left)/r.width-.5,y=(ev.clientY-r.top)/r.height-.5;c.style.transform='translateY(-6px) perspective(900px) rotateX('+(-y*3).toFixed(2)+'deg) rotateY('+(x*3).toFixed(2)+'deg)';});c.addEventListener('pointerleave',function(){c.style.transform='';});});
+})();
+</script></body></html>

@@ -1,11 +1,13 @@
 # XpressIQ reports site, as deployed on the Hostinger VPS (Docker manager project "xpressiq").
 # Project environment (set on the server only, never in this repo):
-#   SITE_HOSTS (domains Caddy serves), CONTACT_TO (where form submissions go), RESEND_API_KEY, MAIL_FROM
+#   SITE_HOSTS (domains Caddy serves), CONTACT_TO (where form submissions go), RESEND_API_KEY, MAIL_FROM,
+#   DEMO_PASSWORD (demo room password), DEMO_SECRET (any long random string), DEMO_LINKS (JSON: product slug -> demo URL),
+#   SITE_BRANCH (git branch to serve, default main), NOINDEX (set to 1 on preview copies)
 # Updating: push to main, then update/restart the project (the web container clones main on start).
 services:
   web:
     image: node:22-alpine
-    command: ["sh", "-c", "apk add --no-cache git >/dev/null && rm -rf /app && git clone --depth 1 https://github.com/Qr4-holding/xpressiq-reports.git /app && cd /app/site && npm install --omit=dev --no-audit --no-fund && exec node server.js"]
+    command: ["sh", "-c", "apk add --no-cache git >/dev/null && rm -rf /app && git clone --depth 1 -b ${SITE_BRANCH:-main} https://github.com/Qr4-holding/xpressiq-reports.git /app && cd /app/site && npm install --omit=dev --no-audit --no-fund && exec node server.js"]
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -13,6 +15,10 @@ services:
       - CONTACT_TO=${CONTACT_TO:-}
       - RESEND_API_KEY=${RESEND_API_KEY:-}
       - MAIL_FROM=${MAIL_FROM:-XpressIQ <reports@xpressiq.co.uk>}
+      - DEMO_PASSWORD=${DEMO_PASSWORD:-}
+      - DEMO_SECRET=${DEMO_SECRET:-}
+      - DEMO_LINKS=${DEMO_LINKS:-}
+      - NOINDEX=${NOINDEX:-}
     labels:
       caddy: ${SITE_HOSTS}
       caddy.reverse_proxy: "{{upstreams 3000}}"

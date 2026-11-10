@@ -31,7 +31,7 @@ def head(title, desc, depth=0, url="", image="", video=""):
                      f'<meta property="og:image:type" content="image/jpeg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'
                      f'<meta property="og:image:alt" content="{esc(title)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{esc(title)}"><meta name="twitter:description" content="{esc(desc)}"><meta name="twitter:image" content="{esc(image)}">')
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">{og}<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{esc(title)}</title><meta name="description" content="{esc(desc)}">
+<script>document.documentElement.className+=" js"</script><title>{esc(title)}</title><meta name="description" content="{esc(desc)}">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{base}{v('assets/site.css')}"></head><body>"""
@@ -43,7 +43,7 @@ def nav(active, depth=0):
         return f'<a href="{b}{href}"{on}>{label}</a>'
     return f"""<header class="nav"><div class="wrap">
 <a class="logo" href="{b}index.html"><span class="h">Xpress<i>IQ</i><b></b></span><small>Fast Movers First</small></a>
-<nav class="navlinks" aria-label="Main navigation">{a('index.html#latest','Latest report','home')}{a('index.html#reports','All reports','reports')}{a('gallery.html','Shorts','gallery')}{a('commission.html','Commission a report','commission')}</nav>
+<nav class="navlinks" aria-label="Main navigation">{a('index.html#builds','Builds','builds')}{a('index.html#reports','Reports','reports')}{a('gallery.html','Shorts','gallery')}{a('commission.html','Commission a report','commission')}<a class="lockl{' on' if active=='demos' else ''}" href="{b}demos"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:13px;height:13px"><path d="M17 9V7A5 5 0 0 0 7 7v2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-8 0V7a3 3 0 0 1 6 0v2z"/></svg>Demo room</a></nav>
 <a class="btn btn-dark navcta" href="{b}index.html#subscribe">Get the weekly report</a>
 </div></header>"""
 
@@ -52,7 +52,7 @@ def footer(depth=0):
     y = datetime.date.today().year
     return f"""<footer class="footer"><div class="wrap">
 <div><a class="logo" href="{b}index.html"><span class="h">Xpress<i style="color:#bdf453">IQ</i></span><small>Fast Movers First</small></a><p style="margin:8px 0 0">Intelligence delivered before you knew you needed it.</p></div>
-<div style="display:flex;gap:24px;flex-wrap:wrap"><a href="{b}index.html#latest">Latest</a><a href="{b}gallery.html">Shorts</a><a href="{b}commission.html">Commission a report</a><a href="{b}commission.html#contact">Contact</a></div>
+<div style="display:flex;gap:24px;flex-wrap:wrap"><a href="{b}index.html#builds">Builds</a><a href="{b}index.html#reports">Reports</a><a href="{b}gallery.html">Shorts</a><a href="{b}demos">Demo room</a><a href="{b}commission.html">Commission a report</a><a href="{b}commission.html#contact">Contact</a></div>
 <p style="margin:0;color:#7f9690">© {y} {SITE['company']} · <a href="{b}privacy.html">Privacy</a></p>
 </div></footer>
 <script>
@@ -70,6 +70,11 @@ b.addEventListener('click',async e=>{{e.stopPropagation();const fu=b.dataset.fil
  }}catch(err){{busy=false;lab.textContent='Share';linkShare();}}
 }});}});
 document.querySelectorAll('form[data-api]').forEach(f=>{{f.addEventListener('submit',async e=>{{e.preventDefault();const btn=f.querySelector('button[type=submit]');const msg=f.querySelector('.formmsg');const data=Object.fromEntries(new FormData(f).entries());btn.disabled=true;try{{const r=await fetch(f.dataset.api,{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(data)}});const j=await r.json();if(j.ok){{f.querySelectorAll('input,textarea,select').forEach(i=>i.disabled=true);btn.textContent=f.dataset.done||'Done';msg.textContent=f.dataset.thanks||'Thank you.';}}else{{msg.textContent=j.error||'Something went wrong. Please try again.';btn.disabled=false;}}}}catch(err){{msg.textContent='Could not send just now. Please try again in a moment.';btn.disabled=false;}}}});}});
+(function(){{var els=document.querySelectorAll('.rv');if(!('IntersectionObserver' in window)){{els.forEach(function(e){{e.classList.add('in')}});return;}}
+var io=new IntersectionObserver(function(es){{es.forEach(function(e){{if(e.isIntersecting){{e.target.classList.add('in');io.unobserve(e.target);}}}});}},{{rootMargin:'0px 0px -8% 0px',threshold:.08}});els.forEach(function(e){{io.observe(e)}});
+setTimeout(function(){{els.forEach(function(e){{var r=e.getBoundingClientRect();if(r.top<innerHeight)e.classList.add('in')}})}},1200);
+if(matchMedia('(hover:hover) and (prefers-reduced-motion:no-preference)').matches)document.querySelectorAll('.pcard').forEach(function(c){{c.addEventListener('pointermove',function(ev){{var r=c.getBoundingClientRect(),x=(ev.clientX-r.left)/r.width-.5,y=(ev.clientY-r.top)/r.height-.5;c.style.transform='translateY(-6px) perspective(900px) rotateX('+(-y*3).toFixed(2)+'deg) rotateY('+(x*3).toFixed(2)+'deg)';}});c.addEventListener('pointerleave',function(){{c.style.transform='';}});}});
+}})();
 </script></body></html>"""
 
 def optin(depth=0, report_slug="", compact=False):
@@ -167,58 +172,137 @@ def report_card(r, depth=0):
 <h3 class="h" style="font-size:22px;font-weight:700;margin:10px 0 6px"><a href="{b}reports/{r['slug']}.html" style="text-decoration:none">{esc(r['title'])}</a></h3>
 <p style="font-size:14px;line-height:1.55;color:#44585b;margin:0">{esc(r['summary'])}</p></article>"""
 
+# ---------- products ----------
+PRODUCTS = MANIFEST.get("products", [])
+LOCK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:15px;height:15px"><path d="M17 9V7A5 5 0 0 0 7 7v2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-8 0V7a3 3 0 0 1 6 0v2z"/></svg>'
+ARR = '<span class="arr" aria-hidden="true">→</span>'
+
+def pvideo(p, depth=0, i=0):
+    """Explainer video slot for a product: the real video when one is set, else a branded placeholder poster."""
+    b = "../" * depth
+    vid = p.get("video")
+    if vid:
+        return (f'<div class="thumb r169" tabindex="0" role="button" aria-label="Play: {esc(vid.get("title", p["name"]))}">'
+                f'<video preload="metadata" playsinline poster="{b}{v(vid["poster"])}" src="{b}{v(vid["file"])}"></video>'
+                f'{PLAY}<span class="dur">{vid.get("duration","")}</span></div>')
+    return (f'<div class="pposter" style="--hue:{p.get("hue",85)};--d:{i*0.7:.1f}s" role="img" aria-label="{esc(p["name"])}: explainer video coming soon">'
+            f'<div class="pt"><span class="wm">Xpress<i>IQ</i></span><span class="chip">{esc(p["sector"])}</span></div>'
+            f'<div><div class="nm">{esc(p["name"])}</div><div class="soon">Explainer video · coming soon</div></div>'
+            f'<span class="pl" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="#10282b" style="width:20px;height:20px"><path d="M7 4.5v15l13-7.5z"/></svg></span></div>')
+
+def product_card(p, i):
+    cls = "pcard rv" + (" feature" if i == 0 else " tall" if i == 1 else "")
+    return f"""<article class="{cls}" id="p-{p['slug']}" style="--d:{(i%3)*0.08:.2f}s">{pvideo(p, 0, i)}
+<div class="pb"><div class="eyebrow">{esc(p['sector'])}</div><h3 class="h">{esc(p['name'])}</h3><p class="tl">{esc(p['tagline'])}</p><p class="ds">{esc(p['desc'])}</p>
+<div class="pf"><a class="demo" href="demos#{p['slug']}">{LOCK}Open the demo</a><a class="more" href="products/{p['slug']}.html">What it does →</a></div></div></article>"""
+
+def enquiry(product="", depth=0, uid="enq"):
+    """Ask for demo access, a subscription or a white-label conversation. Posts to /api/enquiry."""
+    opts = "".join(f'<option{" selected" if p["name"]==product else ""}>{esc(p["name"])}</option>' for p in PRODUCTS)
+    return f"""<form data-api="/api/enquiry" data-done="Sent" data-thanks="Received. You will hear back within two working days." method="post" style="display:flex;flex-direction:column;gap:12px">
+<input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+<div class="field"><label for="{uid}-n">Your name</label><input id="{uid}-n" name="name" required></div>
+<div class="field"><label for="{uid}-e">Email address</label><input id="{uid}-e" name="email" type="email" required></div>
+<div class="field"><label for="{uid}-p">Which build</label><select id="{uid}-p" name="product">{opts}<option>More than one</option></select></div>
+<div class="field"><label for="{uid}-i">What you would like</label><select id="{uid}-i" name="interest"><option>Access to the working demo</option><option>A subscription</option><option>A white-label version</option><option>Something else</option></select></div>
+<button type="submit" class="btn btn-lime">Send request</button><p class="formmsg" role="status" style="font-size:14px;color:#bdf453;margin:0"></p></form>"""
+
+def build_product(i, p):
+    url = f"{BASE_URL}/products/{p['slug']}"
+    does = "".join(f"<li>{esc(x)}</li>" for x in p["does"])
+    nxt = PRODUCTS[(i+1) % len(PRODUCTS)]
+    out = head(f"{p['name']} — {p['tagline']} | XpressIQ", p["desc"], depth=1, url=url)
+    out += nav("builds", depth=1)
+    out += f"""<main><section class="section wrap"><div class="phero">
+<div><div class="eyebrow"><span class="dot"></span>XpressIQ build · {esc(p['sector'])}</div>
+<h1 class="h">{esc(p['name'])}</h1><p class="h" style="font-size:24px;font-weight:700;color:#3f6a1a;letter-spacing:-.02em;margin:0 0 16px">{esc(p['tagline'])}</p>
+<p style="font-size:18px;line-height:1.65;color:#44585b;margin:0 0 22px">{esc(p['desc'])}</p>
+<div class="chips" style="margin-bottom:24px"><span class="chip">Working demo</span><span class="chip">Subscription</span><span class="chip">White-label</span></div>
+<div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn btn-dark" href="../demos#{p['slug']}">{LOCK}Open the working demo</a><a class="btn btn-line" href="#access">Request access</a></div></div>
+<div class="rv">{pvideo(p, 1)}</div></div></section>
+<section class="section wash"><div class="wrap grid2">
+<div class="rv"><div class="eyebrow">What it does</div><h2 class="h" style="font-size:38px;margin:12px 0 22px">In plain terms.</h2><ul class="does">{does}</ul></div>
+<div class="rv" style="--d:.1s"><div class="eyebrow">Who it is for</div><h2 class="h" style="font-size:38px;margin:12px 0 22px">Built for.</h2>
+<div class="card"><p style="font-size:17px;color:#2b3b3e">{esc(p['for'])}</p></div>
+<div class="card" style="margin-top:14px"><div class="eyebrow">How you can have it</div><p style="font-size:16px;color:#2b3b3e"><strong>Subscription</strong>: use it as it is, under its own name.</p><p style="font-size:16px;color:#2b3b3e"><strong>White-label</strong>: the same build under your brand, for your own customers.</p></div></div>
+</div></section>
+<section class="section wrap" id="access"><div class="grid2" style="align-items:start">
+<div class="rv"><div class="eyebrow"><span class="dot"></span>See it working</div><h2 class="h" style="font-size:44px;margin:12px 0 16px">The demo is real.<br>The door is locked.</h2>
+<p style="font-size:17px;line-height:1.65;color:#44585b;max-width:480px">The working demo of {esc(p['name'])} sits in the XpressIQ demo room, behind a password. Ask for access and you can try it yourself, in your own time.</p>
+<p style="margin-top:22px"><a href="{nxt['slug']}.html" style="font-weight:700;text-decoration:none;border-bottom:2px solid #9fb59f">Next build: {esc(nxt['name'])} →</a></p></div>
+<div class="glowb lockbox rv" style="--d:.1s"><div class="eyebrow" style="color:#bdf453">Request access</div>{enquiry(p['name'], 1, 'pe')}</div>
+</div></section></main>"""
+    out += footer(depth=1)
+    (ROOT / "products").mkdir(exist_ok=True)
+    (ROOT / "products" / f"{p['slug']}.html").write_text(out)
+
+def build_private():
+    """Pages only the server may send (password-protected demo room). The server fills in the demo links."""
+    d = ROOT / "private"; d.mkdir(exist_ok=True)
+    rows = "".join(f"""<div class="glowb drow rv" id="{p['slug']}" style="--d:{i*0.05:.2f}s"><div><div class="eyebrow">{esc(p['sector'])}</div><h3 class="h">{esc(p['name'])}</h3><p>{esc(p['desc'])}</p></div><div class="dl"><!--DEMO:{p['slug']}--></div></div>""" for i, p in enumerate(PRODUCTS))
+    out = head("Demo room — XpressIQ", "Working demos of XpressIQ builds.") + nav("demos")
+    out += f"""<main class="room"><section class="section wrap"><div class="sec-head"><div><div class="eyebrow"><span class="dot"></span>Demo room · private</div><h1 class="h" style="font-size:52px;margin-top:14px">The working demos.</h1></div><p>Each button opens the live demo in a new tab. Please do not pass this page on. <a href="/demos/logout" style="color:#bdf453">Lock the room</a></p></div>{rows}</section></main>"""
+    out += footer()
+    (d / "demos.html").write_text(out.replace('href="index.html', 'href="/index.html').replace('href="gallery.html', 'href="/gallery.html').replace('href="commission.html', 'href="/commission.html').replace('href="privacy.html', 'href="/privacy.html').replace('href="assets/', 'href="/assets/').replace('href="demos"', 'href="/demos"'))
+    out = head("Demo room — XpressIQ", "The XpressIQ demo room is private.") + nav("demos")
+    out += f"""<main class="room"><section class="section wrap"><div class="grid2" style="align-items:start">
+<div class="glowb lockbox"><div class="eyebrow">Demo room · private</div><h1 class="h" style="font-size:40px">Enter the password.</h1><p>The working demos are behind this door. If you have been sent a password, enter it here.</p>
+<form method="post" action="/demos/login" style="display:flex;flex-direction:column;gap:12px"><input type="hidden" name="next" id="next"><div class="field"><label for="pw">Password</label><input id="pw" name="password" type="password" required autocomplete="current-password" autofocus></div><p class="err" role="alert"><!--ERR--></p><button class="btn btn-lime" type="submit">Open the demo room</button></form></div>
+<div class="glowb lockbox"><div class="eyebrow">No password yet?</div><h2 class="h" style="font-size:28px">Request access.</h2><p>Say which build you want to see. A password comes back by email.</p>{enquiry("", 0, 'le')}</div>
+</div></section></main><script>document.getElementById('next').value=location.hash.slice(1);</script>"""
+    out += footer()
+    (d / "login.html").write_text(out.replace('href="index.html', 'href="/index.html').replace('href="gallery.html', 'href="/gallery.html').replace('href="commission.html', 'href="/commission.html').replace('href="privacy.html', 'href="/privacy.html').replace('href="assets/', 'href="/assets/').replace('href="demos"', 'href="/demos"'))
+
 # ---------- index ----------
 def build_index():
     L = REPORTS[0]
-    grades = "".join(f'<div class="grade"><span class="tag {tag_for(g["grade"])}">{esc(g["grade"])}</span><div><strong>{esc(g["claim"])}</strong><span>{esc(g["note"])}</span></div></div>' for g in L["grades"])
     others = "".join(report_card(r) for r in REPORTS)
-    radar = "".join(f'<div style="display:flex;justify-content:space-between;gap:16px;padding:17px 0;border-bottom:1px solid #d3dfd2;align-items:center"><div style="display:flex;gap:16px;align-items:baseline"><span style="color:#80a850;font-size:12px;font-weight:700;font-family:Manrope,sans-serif">{i+1:02d}</span><strong style="font-size:16px">{esc(x)}</strong></div><span class="tag tag-hyp">Hypothesis</span></div>' for i,x in enumerate(MANIFEST["radar"]))
-    half = (len(MANIFEST["radar"])+1)//2
-    radar_items = [f'<div style="display:flex;justify-content:space-between;gap:16px;padding:17px 0;border-bottom:1px solid #d3dfd2;align-items:center"><div style="display:flex;gap:16px;align-items:baseline"><span style="color:#80a850;font-size:12px;font-weight:700;font-family:Manrope,sans-serif">{i+1:02d}</span><strong style="font-size:16px">{esc(x)}</strong></div><span class="tag tag-hyp">Hypothesis</span></div>' for i,x in enumerate(MANIFEST["radar"])]
-    radar_html = f'<div class="grid2" style="gap:0 48px"><div style="border-top:1px solid #d3dfd2">{"".join(radar_items[:half])}</div><div style="border-top:1px solid #d3dfd2">{"".join(radar_items[half:])}</div></div>'
-    nx = MANIFEST["next"]
-    out = head(f"XpressIQ — Fast Movers First. {L['title']}", "Weekly intelligence reports for people who move on opportunity. Every claim traced, every finding graded, every report ends with a next move.", url=BASE_URL + "/", image=(f"{BASE_URL}/{share_img(L['videos']['16x9'])}" if L['videos'].get('16x9') else ""))
+    cards = "".join(product_card(p, i) for i, p in enumerate(PRODUCTS))
+    rows = "".join(f'<a class="row" href="#p-{p["slug"]}" style="--d:{i*2}s"><span class="n">{i+1:02d}</span><span class="nm">{esc(p["name"])}</span><span class="sc">{esc(p["sector"])}</span></a>' for i, p in enumerate(PRODUCTS))
+    mq = "".join(f"<span>{esc(x)}</span>" for x in ["Fast Movers First", "Spotted early", "Demand tested", "Built and working"] + [p["name"] for p in PRODUCTS])
+    def words(text, start=0):
+        return " ".join(f'<span class="w"><span style="--d:{(start+k)*0.07:.2f}s">{w}</span></span>' for k, w in enumerate(text.split()))
+    out = head("XpressIQ — Fast Movers First. Ideas spotted early, tested and built.", "XpressIQ finds opportunities before they are obvious, tests the demand and builds the ones that stand up. Weekly Fast Movers First reports and working demos of every build.", url=BASE_URL + "/", image=(f"{BASE_URL}/{share_img(L['videos']['16x9'])}" if L['videos'].get('16x9') else ""))
     out += nav("home")
     out += f"""<main>
-<section class="wrap hero" id="top">
+<section class="hero2" id="top"><span class="blob b1"></span><span class="blob b2"></span><div class="wrap">
 <div>
-<div class="eyebrow"><span class="dot"></span>Fast intel. One report, two videos. Every week.</div>
-<h1 class="h">Find out before<br>it's <i>obvious.</i></h1>
-<p class="lead">Intelligence delivered before you knew you needed it.<span class="copy-lead"> By the time an opportunity is in the trade press, the fast movers have already moved. XpressIQ traces what is changing in UK business, grades the evidence and names the next move worth testing.</span></p>
-<div class="stats copy-lead"><div><div class="h">1 report</div><div>Every week</div></div><div><div class="h">2 videos</div><div>Full briefing and a short</div></div><div><div class="h">3 grades</div><div>Traced · Framework · Not substantiated</div></div></div>
+<div class="eyebrow"><span class="dot"></span>Fast Movers First</div>
+<h1 class="h">{words("Spotted early.")}<br>{words("Tested.", 2)} <i>{words("Built.", 3)}</i></h1>
+<p class="lead">XpressIQ finds opportunities before they are obvious, tests whether the demand is real, and builds the ones that stand up. The reports and the working builds are all here.</p>
+<div class="acts"><a class="btn btn-lime" href="#builds">See the builds {ARR}</a><a class="btn btn-ghost" href="#reports">Read the reports</a></div>
+<div class="facts"><div><div class="h">{len(PRODUCTS)}</div><small>Working builds</small></div><div><div class="h">Weekly</div><small>Fast Movers First report</small></div><div><div class="h">2 ways</div><small>Subscription or white-label</small></div></div>
 </div>
-<div id="latest">
-{thumb(L,'16x9')}
-<div class="meta"><span class="eyebrow">Report {L['number']:02d} · {esc(L['date_label'])}</span><span class="tag tag-next">Latest</span></div>
-<h2 class="h" style="font-size:22px;font-weight:700;margin:10px 0 6px;line-height:1.25">{esc(L['title'])}</h2>
-<p style="color:#53666a;line-height:1.6;font-size:14px;margin:0">{esc(L['summary'])}</p>
-<a href="reports/{L['slug']}.html" style="display:inline-block;color:#3f6a1a;font-size:14px;font-weight:700;margin-top:12px;text-decoration:none">Read the full report →</a>
-<div class="after"><p class="lead" style="margin-top:24px">By the time an opportunity is in the trade press, the fast movers have already moved. XpressIQ traces what is changing in UK business, grades the evidence and names the next move worth testing.</p>
-<div class="stats"><div><div class="h">1 report</div><div>Every week</div></div><div><div class="h">2 videos</div><div>Full and short</div></div><div><div class="h">Traced</div><div>Every claim</div></div></div></div>
-</div>
-</section>
-<div class="ticker"><div class="wrap"><span>FAST MOVERS FIRST</span><span>EVERY CLAIM TRACED TO ITS SOURCE</span><span>EVERY FINDING GRADED</span><span>EVERY REPORT ENDS WITH A NEXT MOVE</span></div></div>
+<div class="glowb board" aria-label="XpressIQ builds"><div class="bh"><span>The builds</span><span class="live"><b></b>Working demos</span></div>{rows}</div>
+</div></section>
+<div class="marq" aria-hidden="true"><div class="track">{mq}{mq}</div></div>
 
-<section class="section dark-sec" id="this-week"><div class="wrap">
-<div class="sec-head"><div><div class="eyebrow">Report {L['number']:02d} · what the evidence supports</div><h2 class="h">{esc(L['title'])}</h2></div><p>{esc(L['standfirst'])}</p></div>
-<div class="grid2">
-<div class="short">{thumb(L,'9x16')}<div class="meta"><span class="eyebrow" style="color:#9fb5ad">The short · {L['videos'].get('9x16',{}).get('duration','')}</span><p style="color:#c0d0c9;line-height:1.7;font-size:16px;margin:0">{esc(L['summary'])}</p><a class="btn btn-lime" href="reports/{L['slug']}.html">Read the full report</a></div></div>
-<div><div class="eyebrow" style="color:#9fb5ad;margin-bottom:6px">Evidence grades</div><div class="grades">{grades}</div>
-<div class="nextmove"><div class="eyebrow">The next move</div><p>{esc(L['next_move'])}</p><a href="commission.html" class="btn btn-lime" style="margin-top:18px">Discuss this with XpressIQ</a></div></div>
+<section class="section wrap" id="builds">
+<div class="sec-head rv"><div><div class="eyebrow"><span class="dot"></span>The builds</div><h2 class="h">Ideas that got built.</h2></div><p>Each one started as an opportunity worth testing. Each one now works. Watch what it does, then open the demo and try it.</p></div>
+<div class="pgrid">{cards}
+<article class="pcard cta rv" style="--d:.16s"><div><div class="eyebrow" style="color:#bdf453">Subscription or white-label</div><h3 class="h" style="margin-top:12px">Want one of these under your own name?</h3></div><p>Every build here can be used as it is, or rebranded as yours for your own customers.</p><a class="btn btn-lime" href="#ways">How it works {ARR}</a></article>
+</div></section>
+
+<section class="section dark-sec" id="ways"><div class="wrap">
+<div class="sec-head rv"><div><div class="eyebrow">Three ways in</div><h2 class="h">Use it. Brand it.<br>Or bring your own question.</h2></div><p>Start with the demo. If it fits, there is a way to have it that suits how you work.</p></div>
+<div class="ways">
+<div class="glowb way rv"><span class="n">01</span><h3 class="h">Subscribe</h3><p>Use a build as it stands, under its own name, for a regular fee. Nothing to set up on your side.</p><a href="demos">Open the demo room →</a></div>
+<div class="glowb way rv" style="--d:.1s"><span class="n">02</span><h3 class="h">White-label</h3><p>The same working build carrying your brand, offered to your own customers as yours.</p><a href="demos">Request a white-label demo →</a></div>
+<div class="glowb way rv" style="--d:.2s"><span class="n">03</span><h3 class="h">Commission a report</h3><p>Have a market or an idea of your own? Get a Fast Movers First report on whether it stands up.</p><a href="commission.html">Start a report enquiry →</a></div>
 </div></div></section>
 
 <section class="section wrap" id="reports">
-<div class="sec-head"><div><div class="eyebrow"><span class="dot"></span>Fast Movers First reports</div><h2 class="h">One report a week.<br>The archive builds itself.</h2></div><p>Every report stays available with its sources, its evidence grades and both videos, so you can check how a call has aged.</p></div>
+<div class="sec-head rv"><div><div class="eyebrow"><span class="dot"></span>Fast Movers First reports</div><h2 class="h">Find out before<br>it's obvious.</h2></div><p>One report a week on what is changing in UK business, with the evidence graded and the next move named. Every build above began as a question like these.</p></div>
+<div class="featrep rv" id="latest"><div>{thumb(L,'16x9')}</div>
+<div><div class="meta" style="margin-top:0;justify-content:flex-start"><span class="tag tag-next">Latest</span><span class="eyebrow">Report {L['number']:02d} · {esc(L['date_label'])}</span></div>
+<h3 class="h" style="font-size:34px;margin:14px 0 12px">{esc(L['title'])}</h3><p style="color:#53666a;line-height:1.65;font-size:16px;margin:0 0 18px">{esc(L['summary'])}</p>
+<a class="btn btn-dark" href="reports/{L['slug']}.html">Read the full report {ARR}</a></div></div>
 <div class="grid3">{others}</div>
 </section>
 
-
-
-
-
 <section class="cta" id="subscribe"><div class="wrap cta-grid">
-{optin()}
-<div class="panel-light"><div class="eyebrow">Need the method on your own question?</div><h2 class="h" style="font-size:32px">Commission a Fast Movers First report.</h2><p>A market, a sector or an idea you cannot stop thinking about, put through the same process: researched, traced, graded and ended with the next move. Delivered as a written report and two videos.</p><a href="commission.html" class="btn btn-dark" style="align-self:flex-start;margin-top:auto">Start a report enquiry</a></div>
+<div class="rv">{optin()}</div>
+<div class="panel-light rv" style="--d:.1s"><div class="eyebrow">Your own question</div><h2 class="h" style="font-size:32px">Commission a Fast Movers First report.</h2><p>A market, a sector or an idea you cannot stop thinking about, researched, graded and ended with the next move. Delivered as a written report and two videos.</p><a href="commission.html" class="btn btn-dark" style="align-self:flex-start;margin-top:auto">Start a report enquiry</a></div>
 </div></section>
 </main>"""
     out += footer()
@@ -341,6 +425,7 @@ def build_privacy():
     (ROOT / "privacy.html").write_text(out)
 
 if __name__ == "__main__":
-    build_index(); build_gallery(); build_commission(); build_privacy()
+    build_index(); build_gallery(); build_commission(); build_privacy(); build_private()
+    for i, p in enumerate(PRODUCTS): build_product(i, p)
     for i, r in enumerate(REPORTS): build_report(i, r); build_short(r)
     print("built:", [p.name for p in ROOT.glob("*.html")], [p.name for p in (ROOT/"reports").glob("*.html")])

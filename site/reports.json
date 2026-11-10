@@ -128,5 +128,105 @@
       "videos": {},
       "access": "free"
     }
+  ],
+  "products": [
+    {
+      "slug": "succession-record",
+      "name": "Succession Record",
+      "sector": "Leadership and boards",
+      "hue": 150,
+      "tagline": "The record of why.",
+      "desc": "When a chief executive leaves, the reasoning behind years of decisions usually leaves with them. Succession Record keeps that judgement on the record, so the next leader inherits the thinking as well as the job.",
+      "does": [
+        "Keeps a leader's decisions, and the reasoning behind them, on the record while they are still in the seat",
+        "Gives an incoming leader a clear briefing from day one",
+        "Puts agreement and disagreement on the record for the board"
+      ],
+      "for": "Boards, chairs and incoming chief executives of larger private companies."
+    },
+    {
+      "slug": "jamaica-title-check",
+      "name": "Jamaica Title Check",
+      "sector": "Property · Caribbean",
+      "hue": 45,
+      "tagline": "Know where the land stands.",
+      "desc": "For families abroad with land in Jamaica. A clear, plain-English answer on where a property's title stands, before anyone spends money on flights or legal fees.",
+      "does": [
+        "Shows what is on record for a property, starting from whatever details the family has",
+        "Keeps every document for the property in one place the right people can reach",
+        "Hands the whole file to a solicitor when it is time for one"
+      ],
+      "for": "Families in the UK, USA and Canada with land in Jamaica, and the solicitors who act for them."
+    },
+    {
+      "slug": "doneitpic",
+      "name": "DoneItPic",
+      "sector": "Trades",
+      "hue": 200,
+      "tagline": "Photos in. A finished video out.",
+      "desc": "Turns a tradesperson's before and after photos into a short, voiced video that is ready to post or to send to the next customer.",
+      "does": [
+        "Makes a finished video from a handful of job photos",
+        "Adds a natural voiceover describing the job",
+        "Delivers one version for social media and one for a website"
+      ],
+      "for": "Decorators, kitchen fitters, roofers, plumbers and any trade whose work shows in a photo."
+    },
+    {
+      "slug": "dronereport",
+      "name": "DroneReport",
+      "sector": "Surveying",
+      "hue": 175,
+      "tagline": "The roof survey, without the ladder.",
+      "desc": "A drone inspects the roof and the building around it. The findings arrive as a written survey report that the client reviews and approves on screen.",
+      "does": [
+        "Shows a full building inspection, from take-off to finished report",
+        "Produces the report in a format surveyors recognise",
+        "Lets the client review, approve and sign off from their own dashboard"
+      ],
+      "for": "Surveyors, insurers and the owners of commercial buildings."
+    },
+    {
+      "slug": "cleanuppic",
+      "name": "CleanUpPic",
+      "sector": "Waste and clearance",
+      "hue": 95,
+      "tagline": "Proof of the job. And the advert.",
+      "desc": "Built for waste removal and clearance operators. Before and after photos of a job become a branded video that proves the work was done and helps win the next one.",
+      "does": [
+        "Turns before and after photos into a branded job video",
+        "Gives the customer visible proof the job was completed",
+        "Gives the operator a ready-made advert from work already done"
+      ],
+      "for": "Waste removal, house clearance and clean-up operators."
+    },
+    {
+      "slug": "sale-now-on",
+      "name": "Sale Now On",
+      "sector": "Retail",
+      "hue": 350,
+      "tagline": "Every sale worth knowing about.",
+      "desc": "Finds what is on sale right now and turns it into short video ads and a weekly show, so shoppers see the saving and go straight to it.",
+      "does": [
+        "Shows the was price, the sale price and the saving at a glance",
+        "Publishes short video ads for each offer and category",
+        "Runs a weekly show of the best of the week's sales"
+      ],
+      "for": "Shoppers who want the real reductions, and retailers who want their sale seen."
+    },
+    {
+      "slug": "saw-this-and-thought-of-you",
+      "name": "Saw This And Thought Of You",
+      "sector": "Gifting",
+      "hue": 280,
+      "tagline": "Gifts worth sending a link for.",
+      "desc": "A gifting site where finds are presented as short video events, made to be shared with the one person they suit.",
+      "does": [
+        "Presents gift ideas as watchable video events",
+        "Makes every find easy to send to the person you thought of",
+        "Brings pieces from different brands together in one show"
+      ],
+      "for": "Anyone buying for someone else, and brands that want to be the thing that gets sent."
+    }
   ]
 }
